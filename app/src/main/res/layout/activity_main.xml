@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.wear.widget.BoxInsetLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="@dimen/box_inset_layout_padding"
+    tools:context=".MainActivity"
+    tools:deviceIds="wear">
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:padding="@dimen/inner_frame_layout_padding"
+        app:layout_boxedEdges="all">
+
+
+        <Button
+            android:id="@+id/buttonStartRec"
+            android:layout_width="70dp"
+            android:layout_height="wrap_content"
+            android:onClick="bleStartAdvertising"
+            android:text="Start"
+            android:layout_marginTop="1dp"
+            android:layout_marginStart="1dp"/>
+
+        <Button
+            android:id="@+id/buttonStopRec"
+            android:layout_width="70dp"
+            android:layout_height="wrap_content"
+            android:onClick="bleStopAdvertising"
+            android:text="Stop"
+            android:layout_marginTop="40dp"
+            android:layout_marginStart="1dp"/>
+
+        <Button
+            android:id="@+id/buttonPlay"
+            android:layout_width="70dp"
+            android:layout_height="wrap_content"
+            android:onClick="onTapStartPlay"
+            android:text="Play"
+            android:layout_marginTop="1dp"
+            android:layout_marginStart="65dp"/>
+
+        <Button
+            android:id="@+id/buttonPause"
+            android:layout_width="70dp"
+            android:layout_height="wrap_content"
+            android:onClick="onTapTest"
+            android:text="Pause"
+            android:layout_marginTop="40dp"
+            android:layout_marginStart="65dp"/>
+
+        <ScrollView
+            android:id="@+id/scrollViewLog"
+            android:layout_width="147dp"
+            android:layout_height="50dp"
+            android:layout_marginTop="75dp"
+            android:layout_weight="1">
+
+            <TextView
+                android:id="@+id/textViewLog"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="logs" />
+
+        </ScrollView>
+
+    </FrameLayout>
+</androidx.wear.widget.BoxInsetLayout>
