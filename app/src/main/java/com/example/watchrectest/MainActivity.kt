@@ -103,7 +103,7 @@ class MainActivity : Activity() {
     }
 
     fun onTapStopRec(view: View){
-        vibrate()
+        vibrateLong()
         stopRecording()
     }
 
