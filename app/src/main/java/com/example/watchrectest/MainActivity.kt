@@ -102,6 +102,7 @@ class MainActivity : Activity() {
         startRecording()
     }
 
+    @RequiresApi(Build.VERSION_CODES.Q)
     fun onTapStopRec(view: View){
         vibrateLong()
         stopRecording()
