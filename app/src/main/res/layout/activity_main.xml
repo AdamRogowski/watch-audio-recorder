@@ -37,7 +37,7 @@
             android:id="@+id/buttonPlay"
             android:layout_width="70dp"
             android:layout_height="wrap_content"
-            android:onClick="onTapStartPlay"
+            android:onClick="onTapStartRec"
             android:text="Play"
             android:layout_marginTop="1dp"
             android:layout_marginStart="65dp"/>
@@ -46,7 +46,7 @@
             android:id="@+id/buttonPause"
             android:layout_width="70dp"
             android:layout_height="wrap_content"
-            android:onClick="onTapTest"
+            android:onClick="onTapStopRec"
             android:text="Pause"
             android:layout_marginTop="40dp"
             android:layout_marginStart="65dp"/>

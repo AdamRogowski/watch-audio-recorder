@@ -7,7 +7,6 @@ import android.bluetooth.le.AdvertiseData
 import android.bluetooth.le.AdvertiseSettings
 import android.content.Context
 import android.os.*
-import android.view.View
 import java.util.*
 
 private const val SERVICE_UUID = "25AE1449-05D3-4C5B-8281-93D4E07420CF"
@@ -162,7 +161,7 @@ class BLEManager(private val activity: MainActivity, private val logManager: Log
         logManager.appendLog("gattServer stopped")
     }
 
-    private fun bleIndicate(data: String) {
+    fun bleIndicate(data: String) {
         charForIndicate?.let {
             it.value = data.toByteArray(Charsets.UTF_8)
             for (device in subscribedDevices) {

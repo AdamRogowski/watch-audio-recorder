@@ -38,6 +38,8 @@ class MainActivity : Activity() {
 
     private lateinit var _BLEManager: BLEManager
 
+    private lateinit var micManager: MicManager
+
 
     /*
     // Requesting permission to RECORD_AUDIO
@@ -78,12 +80,14 @@ class MainActivity : Activity() {
 
     fun onTapStartRec(view: View){
         vibrate()
-        startRecording()
+        //startRecording()
+        micManager.startRecording()
     }
 
     fun onTapStopRec(view: View){
         vibrate()
-        stopRecording()
+        //stopRecording()
+        micManager.stopRecording()
     }
 
     fun onTapStartPlay(view: View){
@@ -145,6 +149,7 @@ class MainActivity : Activity() {
             // process bottomKeyPress
             logManager.appendLog("udalo sie")
             vibrateLong()
+            micManager.stopRecording()
             true
         }
     }
@@ -197,6 +202,8 @@ class MainActivity : Activity() {
         logManager = LogManager(this)
 
         _BLEManager = BLEManager(this, logManager)
+
+        micManager = MicManager(this, logManager, _BLEManager)
 
 
         //ActivityCompat.requestPermissions(this, permissions, REQUEST_PERMISSIONS_CODE)

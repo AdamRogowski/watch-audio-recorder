@@ -30,7 +30,7 @@ class LogManager(private val activity: Activity) {
     }
 
     @SuppressLint("SetTextI18n")
-    fun onTapClearLog(view: View) {
+    fun clearLog() {
         textViewLog.text = "Logs:"
         appendLog("log cleared")
     }
