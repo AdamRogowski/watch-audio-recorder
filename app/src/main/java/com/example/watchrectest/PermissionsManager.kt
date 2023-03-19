@@ -6,7 +6,7 @@ import android.widget.Toast
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 
-class ManagePermissions(private val activity: Activity, private val list: List<String>, private val code:Int) {
+class PermissionsManager(private val activity: Activity, private val list: List<String>, private val code:Int) {
 
     // Check permissions at runtime
     fun checkPermissions() {
