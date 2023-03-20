@@ -2,30 +2,25 @@ package com.example.watchrectest
 
 import android.app.Activity
 import android.media.AudioFormat
-import android.media.AudioManager
 import android.media.AudioRecord
-import android.media.AudioTrack
 import android.media.MediaRecorder
 import java.io.IOException
-import java.io.InputStream
-import java.io.OutputStream
 import java.nio.ByteBuffer
-import java.nio.charset.StandardCharsets
 import java.util.concurrent.atomic.AtomicBoolean
 
-private const val SAMPLING_RATE_IN_HZ = 44100
+private const val SAMPLING_RATE_IN_HZ = 6000
 
 private const val CHANNEL_CONFIG = AudioFormat.CHANNEL_IN_MONO
 
 private const val AUDIO_FORMAT = AudioFormat.ENCODING_PCM_16BIT
 
-private const val BUFFER_SIZE_FACTOR = 2
+private const val BUFFER_SIZE_FACTOR = 1
 
 
 
 class MicManager(private val activity: Activity, private val logManager: LogManager, private val _BLEManager: BLEManager) {
 
-    private val BUFFER_SIZE = AudioRecord.getMinBufferSize(SAMPLING_RATE_IN_HZ,
+    private val minBufferSize = AudioRecord.getMinBufferSize(SAMPLING_RATE_IN_HZ,
         CHANNEL_CONFIG, AUDIO_FORMAT) * BUFFER_SIZE_FACTOR
 
     private val recordingInProgress = AtomicBoolean(false)
@@ -33,7 +28,7 @@ class MicManager(private val activity: Activity, private val logManager: LogMana
     private var recorder: AudioRecord? = null
     private var recordingThread: Thread? = null
 
-    private var buffer = ByteBuffer.allocateDirect(BUFFER_SIZE)
+    private var buffer = ByteBuffer.allocateDirect(minBufferSize)
 
     /*
     private var playThread: Thread? = null
@@ -54,7 +49,16 @@ class MicManager(private val activity: Activity, private val logManager: LogMana
         logManager.appendLog("Assigning recorder")
 
         // Start Recording
-        recorder = AudioRecord(MediaRecorder.AudioSource.DEFAULT, SAMPLING_RATE_IN_HZ, CHANNEL_CONFIG, AUDIO_FORMAT, BUFFER_SIZE)
+        recorder = AudioRecord(MediaRecorder.AudioSource.DEFAULT, SAMPLING_RATE_IN_HZ, CHANNEL_CONFIG, AUDIO_FORMAT, minBufferSize)
+
+        /*
+        // To get preferred buffer size and sampling rate.
+        // To get preferred buffer size and sampling rate.
+        val audioManager = activity.getSystemService(Context.AUDIO_SERVICE) as AudioManager
+        val rate = audioManager.getProperty(AudioManager.PROPERTY_OUTPUT_SAMPLE_RATE)
+        val size = audioManager.getProperty(AudioManager.PROPERTY_OUTPUT_FRAMES_PER_BUFFER)
+        logManager.appendLog("Buffer Size :$size & Rate: $rate")
+         */
 
         recorder!!.startRecording()
         logManager.appendLog("huj1")
@@ -68,21 +72,29 @@ class MicManager(private val activity: Activity, private val logManager: LogMana
     // Method for sending Audio
     private fun sendRecording() {
         // Infinite loop until microphone button is released
-        buffer = ByteBuffer.allocateDirect(BUFFER_SIZE)
+        buffer = ByteBuffer.allocateDirect(minBufferSize)
         logManager.appendLog("huj2")
 
         while (recordingInProgress.get()) {
             try {
-                if(recorder?.read(buffer, BUFFER_SIZE)!! < 0 ){
+                if(recorder?.read(buffer, minBufferSize)!! < 0 ){
                     logManager.appendLog("Reading of audio buffer failed")
                     return
                 }
                 buffer.position(0) // Reset the buffer position to zero
-                buffer.let { recorder?.read(it, BUFFER_SIZE) }
+                buffer.let { recorder?.read(it, minBufferSize) }
 
                 //_BLEManager.bleIndicate("huj")
                 //buffer.let { _BLEManager.bleIndicate(StandardCharsets.UTF_8.decode(buffer).toString()) }
-                _BLEManager.bleIndicate(StandardCharsets.UTF_8.decode(buffer).toString())
+                if (buffer.remaining()==0) logManager.appendLog("buffer empty, nothing recorded")
+                else{
+                    //logManager.appendLog(buffer.toString())
+                    val arr = ByteArray(buffer.remaining())
+                    buffer.get(arr)
+
+                    logManager.appendLog(arr.toString())
+                    _BLEManager.bleIndicate(arr)
+                }
                 //outStream?.write(buffer)
                 //_BLEManager.bleIndicate(recorder?.recordingState.toString() + " huj")
             } catch (e: IOException) {

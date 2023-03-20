@@ -1,12 +1,15 @@
 package com.example.watchrectest
 
+import android.Manifest
 import android.bluetooth.*
 import android.bluetooth.BluetoothManager
 import android.bluetooth.le.AdvertiseCallback
 import android.bluetooth.le.AdvertiseData
 import android.bluetooth.le.AdvertiseSettings
 import android.content.Context
+import android.content.pm.PackageManager
 import android.os.*
+import androidx.core.app.ActivityCompat
 import java.util.*
 
 private const val SERVICE_UUID = "25AE1449-05D3-4C5B-8281-93D4E07420CF"
@@ -161,9 +164,9 @@ class BLEManager(private val activity: MainActivity, private val logManager: Log
         logManager.appendLog("gattServer stopped")
     }
 
-    fun bleIndicate(data: String) {
+    fun bleIndicate(data: ByteArray) {
         charForIndicate?.let {
-            it.value = data.toByteArray(Charsets.UTF_8)
+            it.value = data
             for (device in subscribedDevices) {
                 gattServer?.notifyCharacteristicChanged(device, it, true)
             }
@@ -201,7 +204,7 @@ class BLEManager(private val activity: MainActivity, private val logManager: Log
     //-----------------------------------------------------------------------------------------------------------
 
     fun indicateTest() {
-        val data = /*"[${getCurrentTime()}] test"*/"test"
+        val data = byteArrayOf(0x48, 101, 108, 108, 111)
         if(anyoneSubscribes()){
             bleIndicate(data)
             logManager.appendLog("indication test sent")
