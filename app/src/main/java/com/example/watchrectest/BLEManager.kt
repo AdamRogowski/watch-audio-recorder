@@ -45,6 +45,11 @@ class BLEManager(private val activity: MainActivity, private val logManager: Log
 
 
     private val gattServerCallback = object : BluetoothGattServerCallback() {
+        override fun onMtuChanged(device: BluetoothDevice?, mtu: Int) {
+            super.onMtuChanged(device, mtu)
+            //logManager.appendLog("MTU changed to: $mtu")
+        }
+
         override fun onConnectionStateChange(device: BluetoothDevice, status: Int, newState: Int) {
             activity.runOnUiThread {
                 if (newState == BluetoothProfile.STATE_CONNECTED){

@@ -1,14 +1,12 @@
 package com.example.watchrectest
 
 import android.app.Activity
-import android.media.AudioFormat
-import android.media.AudioRecord
-import android.media.MediaRecorder
+import android.media.*
 import java.io.IOException
 import java.nio.ByteBuffer
 import java.util.concurrent.atomic.AtomicBoolean
 
-private const val SAMPLING_RATE_IN_HZ = 6000
+private const val SAMPLING_RATE_IN_HZ = 16000
 
 private const val CHANNEL_CONFIG = AudioFormat.CHANNEL_IN_MONO
 
@@ -29,6 +27,12 @@ class MicManager(private val activity: Activity, private val logManager: LogMana
     private var recordingThread: Thread? = null
 
     private var buffer = ByteBuffer.allocateDirect(minBufferSize)
+
+    //TESTING AUDIO TRACK
+
+    private var track = AudioTrack(AudioManager.STREAM_MUSIC, SAMPLING_RATE_IN_HZ,
+        AudioFormat.CHANNEL_CONFIGURATION_MONO, AUDIO_FORMAT,
+        minBufferSize, AudioTrack.MODE_STREAM)
 
     /*
     private var playThread: Thread? = null
@@ -61,7 +65,7 @@ class MicManager(private val activity: Activity, private val logManager: LogMana
          */
 
         recorder!!.startRecording()
-        logManager.appendLog("huj1")
+        track.play()
         //_BLEManager.bleIndicate(recorder?.recordingState.toString())
         recordingInProgress.set(true)
         // Start a thread
@@ -72,8 +76,8 @@ class MicManager(private val activity: Activity, private val logManager: LogMana
     // Method for sending Audio
     private fun sendRecording() {
         // Infinite loop until microphone button is released
+        logManager.appendLog("sendRecording started")
         buffer = ByteBuffer.allocateDirect(minBufferSize)
-        logManager.appendLog("huj2")
 
         while (recordingInProgress.get()) {
             try {
@@ -84,19 +88,25 @@ class MicManager(private val activity: Activity, private val logManager: LogMana
                 buffer.position(0) // Reset the buffer position to zero
                 buffer.let { recorder?.read(it, minBufferSize) }
 
-                //_BLEManager.bleIndicate("huj")
-                //buffer.let { _BLEManager.bleIndicate(StandardCharsets.UTF_8.decode(buffer).toString()) }
                 if (buffer.remaining()==0) logManager.appendLog("buffer empty, nothing recorded")
                 else{
-                    //logManager.appendLog(buffer.toString())
                     val arr = ByteArray(buffer.remaining())
                     buffer.get(arr)
 
-                    logManager.appendLog(arr.toString())
+                    /*
+                    val testByteArray = ByteArray(500) { i ->
+                        when {
+                            i < 250 -> ('a' + i % 26).code.toByte() // fill first 250 bytes with lowercase letters from 'a' to 'z'
+                            else -> ('A' + i % 26).code.toByte() // fill the remaining 250 bytes with uppercase letters from 'A' to 'Z'
+                        }
+                    }
+                    */
+
+                    //_BLEManager.bleIndicate(testByteArray)
+                    //logManager.appendLog(arr.size.toString())
                     _BLEManager.bleIndicate(arr)
+                    //logManager.appendLog(track.write(arr, 0, arr.size, AudioTrack.WRITE_NON_BLOCKING).toString())
                 }
-                //outStream?.write(buffer)
-                //_BLEManager.bleIndicate(recorder?.recordingState.toString() + " huj")
             } catch (e: IOException) {
                 logManager.appendLog("Error when sending recording")
             }

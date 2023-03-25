@@ -88,7 +88,7 @@ class MainActivity : Activity() {
     fun onTapStopRec(view: View){
         vibrate()
         //stopRecording()
-        //micManager.stopRecording()
+        micManager.stopRecording()
     }
 
     fun onTapStartPlay(view: View){
