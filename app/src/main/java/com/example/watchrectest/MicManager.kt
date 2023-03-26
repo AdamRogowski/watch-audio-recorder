@@ -6,11 +6,11 @@ import java.io.IOException
 import java.nio.ByteBuffer
 import java.util.concurrent.atomic.AtomicBoolean
 
-private const val SAMPLING_RATE_IN_HZ = 16000
+private const val SAMPLING_RATE_IN_HZ = 12600
 
 private const val CHANNEL_CONFIG = AudioFormat.CHANNEL_IN_MONO
 
-private const val AUDIO_FORMAT = AudioFormat.ENCODING_PCM_16BIT
+private const val AUDIO_FORMAT = AudioFormat.ENCODING_PCM_8BIT
 
 private const val BUFFER_SIZE_FACTOR = 1
 
@@ -28,11 +28,7 @@ class MicManager(private val activity: Activity, private val logManager: LogMana
 
     private var buffer = ByteBuffer.allocateDirect(minBufferSize)
 
-    //TESTING AUDIO TRACK
 
-    private var track = AudioTrack(AudioManager.STREAM_MUSIC, SAMPLING_RATE_IN_HZ,
-        AudioFormat.CHANNEL_CONFIGURATION_MONO, AUDIO_FORMAT,
-        minBufferSize, AudioTrack.MODE_STREAM)
 
     /*
     private var playThread: Thread? = null
@@ -65,7 +61,6 @@ class MicManager(private val activity: Activity, private val logManager: LogMana
          */
 
         recorder!!.startRecording()
-        track.play()
         //_BLEManager.bleIndicate(recorder?.recordingState.toString())
         recordingInProgress.set(true)
         // Start a thread
@@ -93,19 +88,9 @@ class MicManager(private val activity: Activity, private val logManager: LogMana
                     val arr = ByteArray(buffer.remaining())
                     buffer.get(arr)
 
-                    /*
-                    val testByteArray = ByteArray(500) { i ->
-                        when {
-                            i < 250 -> ('a' + i % 26).code.toByte() // fill first 250 bytes with lowercase letters from 'a' to 'z'
-                            else -> ('A' + i % 26).code.toByte() // fill the remaining 250 bytes with uppercase letters from 'A' to 'Z'
-                        }
-                    }
-                    */
-
                     //_BLEManager.bleIndicate(testByteArray)
                     //logManager.appendLog(arr.size.toString())
                     _BLEManager.bleIndicate(arr)
-                    //logManager.appendLog(track.write(arr, 0, arr.size, AudioTrack.WRITE_NON_BLOCKING).toString())
                 }
             } catch (e: IOException) {
                 logManager.appendLog("Error when sending recording")
