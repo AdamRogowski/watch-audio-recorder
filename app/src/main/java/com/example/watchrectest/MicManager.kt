@@ -90,7 +90,7 @@ class MicManager(private val activity: Activity, private val logManager: LogMana
 
                     //_BLEManager.bleIndicate(testByteArray)
                     //logManager.appendLog(arr.size.toString())
-                    _BLEManager.bleIndicate(arr)
+                    _BLEManager.bleNotify(arr)
                 }
             } catch (e: IOException) {
                 logManager.appendLog("Error when sending recording")

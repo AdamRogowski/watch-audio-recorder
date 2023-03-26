@@ -62,10 +62,6 @@ class MainActivity : Activity() {
 
     */
 
-    private fun getCurrentTime(): String{
-        return SimpleDateFormat("HH:mm:ss", Locale.getDefault()).format(Date())
-    }
-
 
 
     private fun vibrate(){
@@ -164,7 +160,7 @@ class MainActivity : Activity() {
     }
 
     fun onTapTest(view: View){
-        _BLEManager.indicateTest()
+        _BLEManager.notifyTest()
     }
 
 

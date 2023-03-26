@@ -8,6 +8,8 @@ import android.util.Log
 import android.view.View
 import android.widget.ScrollView
 import android.widget.TextView
+import java.text.SimpleDateFormat
+import java.util.*
 
 class LogManager(private val activity: Activity) {
 
@@ -33,5 +35,9 @@ class LogManager(private val activity: Activity) {
     fun clearLog() {
         textViewLog.text = "Logs:"
         appendLog("log cleared")
+    }
+
+    fun getCurrentTime(): String{
+        return SimpleDateFormat("HH:mm:ss", Locale.getDefault()).format(Date())
     }
 }

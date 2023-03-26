@@ -1,26 +1,23 @@
 package com.example.watchrectest
 
-import android.Manifest
 import android.bluetooth.*
 import android.bluetooth.BluetoothManager
 import android.bluetooth.le.AdvertiseCallback
 import android.bluetooth.le.AdvertiseData
 import android.bluetooth.le.AdvertiseSettings
 import android.content.Context
-import android.content.pm.PackageManager
 import android.os.*
-import androidx.core.app.ActivityCompat
 import java.util.*
 
 private const val SERVICE_UUID = "25AE1449-05D3-4C5B-8281-93D4E07420CF"
-private const val CHAR_FOR_INDICATE_UUID = "25AE1494-05D3-4C5B-8281-93D4E07420CF"
+private const val CHAR_FOR_NOTIFY_UUID = "25AE1494-05D3-4C5B-8281-93D4E07420CF"
 private const val CCC_DESCRIPTOR_UUID = "00002930-0000-1000-8000-00805f9b34fb"
 
 class BLEManager(private val activity: MainActivity, private val logManager: LogManager) {
 
     //BLE GATT server--------------------------------------------------------------------------------------------
     private var gattServer: BluetoothGattServer? = null
-    private val charForIndicate get() = gattServer?.getService(UUID.fromString(SERVICE_UUID))?.getCharacteristic(UUID.fromString(CHAR_FOR_INDICATE_UUID))
+    private val charForNotify get() = gattServer?.getService(UUID.fromString(SERVICE_UUID))?.getCharacteristic(UUID.fromString(CHAR_FOR_NOTIFY_UUID))
     private val subscribedDevices = mutableSetOf<BluetoothDevice>()
 
     //BLE Advertising
@@ -90,8 +87,8 @@ class BLEManager(private val activity: MainActivity, private val logManager: Log
             var strLog = "onDescriptorWriteRequest"
             if (descriptor.uuid == UUID.fromString(CCC_DESCRIPTOR_UUID)) {
                 var status = BluetoothGatt.GATT_REQUEST_NOT_SUPPORTED
-                if (descriptor.characteristic.uuid == UUID.fromString(CHAR_FOR_INDICATE_UUID)) {
-                    if (Arrays.equals(value, BluetoothGattDescriptor.ENABLE_INDICATION_VALUE)) {
+                if (descriptor.characteristic.uuid == UUID.fromString(CHAR_FOR_NOTIFY_UUID)) {
+                    if (Arrays.equals(value, BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE)) {
                         subscribedDevices.add(device)
                         status = BluetoothGatt.GATT_SUCCESS
                         strLog += ", subscribed"
@@ -145,14 +142,14 @@ class BLEManager(private val activity: MainActivity, private val logManager: Log
     private fun bleStartGattServer() {
         val gattServer = bluetoothManager.openGattServer(activity, gattServerCallback)
         val service = BluetoothGattService(UUID.fromString(SERVICE_UUID), BluetoothGattService.SERVICE_TYPE_PRIMARY)
-        var charForIndicate = BluetoothGattCharacteristic(UUID.fromString(CHAR_FOR_INDICATE_UUID),
-            BluetoothGattCharacteristic.PROPERTY_INDICATE,
+        var charForNotify = BluetoothGattCharacteristic(UUID.fromString(CHAR_FOR_NOTIFY_UUID),
+            BluetoothGattCharacteristic.PROPERTY_NOTIFY,
             BluetoothGattCharacteristic.PERMISSION_READ)
         var charConfigDescriptor = BluetoothGattDescriptor(UUID.fromString(CCC_DESCRIPTOR_UUID),
             BluetoothGattDescriptor.PERMISSION_READ or BluetoothGattDescriptor.PERMISSION_WRITE)
-        charForIndicate.addDescriptor(charConfigDescriptor)
+        charForNotify.addDescriptor(charConfigDescriptor)
 
-        service.addCharacteristic(charForIndicate)
+        service.addCharacteristic(charForNotify)
 
         val result = gattServer.addService(service)
         this.gattServer = gattServer
@@ -169,8 +166,8 @@ class BLEManager(private val activity: MainActivity, private val logManager: Log
         logManager.appendLog("gattServer stopped")
     }
 
-    fun bleIndicate(data: ByteArray) {
-        charForIndicate?.let {
+    fun bleNotify(data: ByteArray) {
+        charForNotify?.let {
             it.value = data
             for (device in subscribedDevices) {
                 gattServer?.notifyCharacteristicChanged(device, it, true)
@@ -178,9 +175,11 @@ class BLEManager(private val activity: MainActivity, private val logManager: Log
         }
     }
 
+
+    //TODO: check advertise settings
     private val advertiseSettings = AdvertiseSettings.Builder()
-        .setAdvertiseMode(AdvertiseSettings.ADVERTISE_MODE_BALANCED)
-        .setTxPowerLevel(AdvertiseSettings.ADVERTISE_TX_POWER_MEDIUM)
+        .setAdvertiseMode(AdvertiseSettings.ADVERTISE_MODE_LOW_LATENCY)
+        .setTxPowerLevel(AdvertiseSettings.ADVERTISE_TX_POWER_HIGH)
         .setConnectable(true)
         .build()
 
@@ -208,11 +207,11 @@ class BLEManager(private val activity: MainActivity, private val logManager: Log
     }
     //-----------------------------------------------------------------------------------------------------------
 
-    fun indicateTest() {
+    fun notifyTest() {
         val data = byteArrayOf(0x48, 101, 108, 108, 111)
         if(anyoneSubscribes()){
-            bleIndicate(data)
-            logManager.appendLog("indication test sent")
+            bleNotify(data)
+            logManager.appendLog("notify test sent")
         }
         else{
             logManager.appendLog("No one subscribes")
