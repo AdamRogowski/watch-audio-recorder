@@ -130,8 +130,19 @@ class BLEManager(private val activity: MainActivity, private val logManager: Log
      */
 
     fun bleStartAdvertising() {
+        /*
+        if(!bluetoothAdapter.isLe2MPhySupported){
+            logManager.appendLog("2M PHY not supported")
+            return
+        }
+        if(!bluetoothAdapter.isLeExtendedAdvertisingSupported){
+            logManager.appendLog("LE Extended Advertising not supported")
+            return
+        }
+         */
         bleStartGattServer()
         bleAdvertiser.startAdvertising(advertiseSettings, advertiseData, advertiseCallback)
+        //bleAdvertiser.startAdvertisingSet(advertiseParameters.build(), advertiseData, null, null, null, callback)
     }
 
     fun bleStopAdvertising() {
@@ -178,15 +189,40 @@ class BLEManager(private val activity: MainActivity, private val logManager: Log
 
     //TODO: check advertise settings
     private val advertiseSettings = AdvertiseSettings.Builder()
-        .setAdvertiseMode(AdvertiseSettings.ADVERTISE_MODE_LOW_LATENCY)
-        .setTxPowerLevel(AdvertiseSettings.ADVERTISE_TX_POWER_HIGH)
+        .setAdvertiseMode(AdvertiseSettings.ADVERTISE_MODE_LOW_POWER)
+        .setTxPowerLevel(AdvertiseSettings.ADVERTISE_TX_POWER_ULTRA_LOW)
         .setConnectable(true)
         .build()
+
+    /*
+    private val advertiseParameters = AdvertisingSetParameters.Builder()
+        .setLegacyMode(false)
+        .setInterval(AdvertisingSetParameters.INTERVAL_MIN)
+        .setTxPowerLevel(AdvertisingSetParameters.TX_POWER_MEDIUM)
+        .setPrimaryPhy(BluetoothDevice.PHY_LE_2M)
+        .setSecondaryPhy(BluetoothDevice.PHY_LE_1M)
+     */
 
     private val advertiseData = AdvertiseData.Builder()
         .setIncludeDeviceName(false) // don't include name, because if name size > 8 bytes, ADVERTISE_FAILED_DATA_TOO_LARGE
         .addServiceUuid(ParcelUuid(UUID.fromString(SERVICE_UUID)))
         .build()
+
+    /*
+    private val callback: AdvertisingSetCallback = object : AdvertisingSetCallback() {
+        override fun onAdvertisingSetStarted(
+            advertisingSet: AdvertisingSet?,
+            txPower: Int,
+            status: Int
+        ) {
+            logManager.appendLog("onAdvertisingSetStarted(): txPower:$txPower , status: $status")
+        }
+
+        override fun onAdvertisingSetStopped(advertisingSet: AdvertisingSet?) {
+            logManager.appendLog("onAdvertisingSetStopped():")
+        }
+    }
+     */
 
     private val advertiseCallback = object : AdvertiseCallback() {
         override fun onStartSuccess(settingsInEffect: AdvertiseSettings) {

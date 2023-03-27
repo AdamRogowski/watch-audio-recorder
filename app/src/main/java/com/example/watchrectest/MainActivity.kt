@@ -77,14 +77,19 @@ class MainActivity : Activity() {
     fun onTapStartRec(view: View){
         vibrate()
         //startRecording()
-        micManager.startRecording()
         //_BLEManager.indicateTest()
+
+        micManager.startRecording()
+        //micManager.testBLEThroughputOn()
     }
 
     fun onTapStopRec(view: View){
         vibrate()
         //stopRecording()
+
         micManager.stopRecording()
+
+        //micManager.testBLEThroughputOff()
     }
 
     fun onTapStartPlay(view: View){

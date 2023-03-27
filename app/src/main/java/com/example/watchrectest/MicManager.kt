@@ -4,6 +4,7 @@ import android.app.Activity
 import android.media.*
 import java.io.IOException
 import java.nio.ByteBuffer
+import java.util.concurrent.ArrayBlockingQueue
 import java.util.concurrent.atomic.AtomicBoolean
 
 private const val SAMPLING_RATE_IN_HZ = 12600
@@ -13,6 +14,8 @@ private const val CHANNEL_CONFIG = AudioFormat.CHANNEL_IN_MONO
 private const val AUDIO_FORMAT = AudioFormat.ENCODING_PCM_8BIT
 
 private const val BUFFER_SIZE_FACTOR = 1
+
+private const val QUEUE_CAPACITY = 1000
 
 
 
@@ -25,10 +28,14 @@ class MicManager(private val activity: Activity, private val logManager: LogMana
 
     private var recorder: AudioRecord? = null
     private var recordingThread: Thread? = null
+    private var sendingThread: Thread? = null
 
-    private var buffer = ByteBuffer.allocateDirect(minBufferSize)
+
+    private val queue: ArrayBlockingQueue<ByteArray> = ArrayBlockingQueue(QUEUE_CAPACITY) //Max capacity ~500KB with ByteArray.size ~ 500B
 
 
+
+    private var testThroughput : Boolean = true
 
     /*
     private var playThread: Thread? = null
@@ -44,6 +51,24 @@ class MicManager(private val activity: Activity, private val logManager: LogMana
 
 
      */
+    fun testBLEThroughputOn(){
+        val testByteArray = ByteArray(512) { i ->
+            when {
+                i < 250 -> ('a' + i % 26).toByte() // fill first 250 bytes with lowercase letters from 'a' to 'z'
+                else -> ('A' + i % 26).toByte() // fill the remaining 250 bytes with uppercase letters from 'A' to 'Z'
+            }
+        }
+
+        while(testThroughput){
+            logManager.appendLog(logManager.getCurrentTime() + "test")
+            _BLEManager.bleNotify(testByteArray)
+
+        }
+    }
+
+    fun testBLEThroughputOff(){
+        testThroughput = false
+    }
 
     fun startRecording() {
         logManager.appendLog("Assigning recorder")
@@ -51,49 +76,57 @@ class MicManager(private val activity: Activity, private val logManager: LogMana
         // Start Recording
         recorder = AudioRecord(MediaRecorder.AudioSource.DEFAULT, SAMPLING_RATE_IN_HZ, CHANNEL_CONFIG, AUDIO_FORMAT, minBufferSize)
 
-        /*
-        // To get preferred buffer size and sampling rate.
-        // To get preferred buffer size and sampling rate.
-        val audioManager = activity.getSystemService(Context.AUDIO_SERVICE) as AudioManager
-        val rate = audioManager.getProperty(AudioManager.PROPERTY_OUTPUT_SAMPLE_RATE)
-        val size = audioManager.getProperty(AudioManager.PROPERTY_OUTPUT_FRAMES_PER_BUFFER)
-        logManager.appendLog("Buffer Size :$size & Rate: $rate")
-         */
-
         recorder!!.startRecording()
-        //_BLEManager.bleIndicate(recorder?.recordingState.toString())
+
         recordingInProgress.set(true)
-        // Start a thread
-        recordingThread = Thread(Runnable { sendRecording() }, "AudioRecorder Thread")
+
+        recordingThread = Thread(Runnable { recordIntoQueue() }, "AudioRecorder Thread")
+        sendingThread = Thread(Runnable { sendFromQueue() }, "Sending Thread")
         recordingThread?.start()
+        sendingThread?.start()
     }
 
-    // Method for sending Audio
-    private fun sendRecording() {
-        // Infinite loop until microphone button is released
-        logManager.appendLog("sendRecording started")
-        buffer = ByteBuffer.allocateDirect(minBufferSize)
+    private fun recordIntoQueue(){
+        val buffer = ByteBuffer.allocateDirect(minBufferSize)
 
         while (recordingInProgress.get()) {
             try {
-                if(recorder?.read(buffer, minBufferSize)!! < 0 ){
-                    logManager.appendLog("Reading of audio buffer failed")
-                    return
-                }
                 buffer.position(0) // Reset the buffer position to zero
                 buffer.let { recorder?.read(it, minBufferSize) }
 
-                if (buffer.remaining()==0) logManager.appendLog("buffer empty, nothing recorded")
-                else{
-                    val arr = ByteArray(buffer.remaining())
-                    buffer.get(arr)
+                val arr = ByteArray(buffer.remaining())
+                buffer.get(arr)
 
+                queue.add(arr)
+
+                logManager.appendLog(logManager.getCurrentTime() + " " + arr.size.toString())
+                //_BLEManager.bleIndicate(testByteArray)
+                //logManager.appendLog(arr.size.toString())
+                //_BLEManager.bleNotify(arr)
+
+            } catch (e: Exception) {
+                logManager.appendLog("Error when recording into queue, e: " + e.message)
+            }
+
+        }
+    }
+
+    // Method for sending Audio
+    private fun sendFromQueue() {
+        logManager.appendLog("sendRecording started")
+
+        while (recordingInProgress.get()) {
+            try {
+                if(!queue.isEmpty()){
+                    val arr = queue.take()
+
+                    _BLEManager.bleNotify(arr)
+                    logManager.appendLog(logManager.getCurrentTime() + " " + arr.size.toString())
                     //_BLEManager.bleIndicate(testByteArray)
                     //logManager.appendLog(arr.size.toString())
-                    _BLEManager.bleNotify(arr)
                 }
-            } catch (e: IOException) {
-                logManager.appendLog("Error when sending recording")
+            } catch (e: Exception) {
+                logManager.appendLog("Error when sending from queue, e: " + e.message)
             }
 
         }
@@ -107,6 +140,7 @@ class MicManager(private val activity: Activity, private val logManager: LogMana
             recorder!!.release()
             recorder = null
             recordingThread = null
+            sendingThread = null
             logManager.appendLog("recording stopped")
         }
     }
