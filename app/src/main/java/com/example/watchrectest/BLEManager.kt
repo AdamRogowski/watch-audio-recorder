@@ -15,6 +15,16 @@ private const val CCC_DESCRIPTOR_UUID = "00002930-0000-1000-8000-00805f9b34fb"
 
 class BLEManager(private val activity: MainActivity, private val logManager: LogManager) {
 
+    //Throughput test--------------------------------------------------------------------------------------------
+    private val doTests: Boolean = false
+    private var testIterator: Int = 0
+    private val nrOfPackets: Int = 200
+    private val packetSizeBytes: Int = 512
+
+    private var start = ""
+    private var stop = ""
+
+
     //BLE GATT server--------------------------------------------------------------------------------------------
     private var gattServer: BluetoothGattServer? = null
     private val charForNotify get() = gattServer?.getService(UUID.fromString(SERVICE_UUID))?.getCharacteristic(UUID.fromString(CHAR_FOR_NOTIFY_UUID))
@@ -62,7 +72,22 @@ class BLEManager(private val activity: MainActivity, private val logManager: Log
         }
 
         override fun onNotificationSent(device: BluetoothDevice, status: Int) {
-            logManager.appendLog("onNotificationSent status=$status")
+            logManager.appendLog(logManager.getCurrentTime() + " notification sent status=$status")
+
+            /*
+            testIterator++
+            if(testIterator == 1) start = logManager.getCurrentTime()
+            else if(testIterator == nrOfPackets){
+                stop = logManager.getCurrentTime()
+                //HH:mm:ss:SSS
+                val period: Double = stop.slice(0..1).toDouble() * 3600 + stop.slice(3..4).toDouble() * 60 + stop.slice(6..7).toDouble() + stop.slice(9..11).toDouble() / 1000 - (start.slice(0..1).toDouble() * 3600 + start.slice(3..4).toDouble() * 60 + start.slice(6..7).toDouble() + start.slice(9..11).toDouble() / 1000)
+                val throughput: Int = (nrOfPackets * packetSizeBytes * 8 / 1000 / period).toInt()
+                logManager.appendLog("measured throughput: $throughput kbps")
+                testIterator = 0
+            }
+
+             */
+
         }
 
         override fun onDescriptorReadRequest(device: BluetoothDevice, requestId: Int, offset: Int, descriptor: BluetoothGattDescriptor) {
@@ -130,16 +155,6 @@ class BLEManager(private val activity: MainActivity, private val logManager: Log
      */
 
     fun bleStartAdvertising() {
-        /*
-        if(!bluetoothAdapter.isLe2MPhySupported){
-            logManager.appendLog("2M PHY not supported")
-            return
-        }
-        if(!bluetoothAdapter.isLeExtendedAdvertisingSupported){
-            logManager.appendLog("LE Extended Advertising not supported")
-            return
-        }
-         */
         bleStartGattServer()
         bleAdvertiser.startAdvertising(advertiseSettings, advertiseData, advertiseCallback)
         //bleAdvertiser.startAdvertisingSet(advertiseParameters.build(), advertiseData, null, null, null, callback)
@@ -186,43 +201,16 @@ class BLEManager(private val activity: MainActivity, private val logManager: Log
         }
     }
 
-
-    //TODO: check advertise settings
     private val advertiseSettings = AdvertiseSettings.Builder()
         .setAdvertiseMode(AdvertiseSettings.ADVERTISE_MODE_LOW_POWER)
         .setTxPowerLevel(AdvertiseSettings.ADVERTISE_TX_POWER_ULTRA_LOW)
         .setConnectable(true)
         .build()
 
-    /*
-    private val advertiseParameters = AdvertisingSetParameters.Builder()
-        .setLegacyMode(false)
-        .setInterval(AdvertisingSetParameters.INTERVAL_MIN)
-        .setTxPowerLevel(AdvertisingSetParameters.TX_POWER_MEDIUM)
-        .setPrimaryPhy(BluetoothDevice.PHY_LE_2M)
-        .setSecondaryPhy(BluetoothDevice.PHY_LE_1M)
-     */
-
     private val advertiseData = AdvertiseData.Builder()
         .setIncludeDeviceName(false) // don't include name, because if name size > 8 bytes, ADVERTISE_FAILED_DATA_TOO_LARGE
         .addServiceUuid(ParcelUuid(UUID.fromString(SERVICE_UUID)))
         .build()
-
-    /*
-    private val callback: AdvertisingSetCallback = object : AdvertisingSetCallback() {
-        override fun onAdvertisingSetStarted(
-            advertisingSet: AdvertisingSet?,
-            txPower: Int,
-            status: Int
-        ) {
-            logManager.appendLog("onAdvertisingSetStarted(): txPower:$txPower , status: $status")
-        }
-
-        override fun onAdvertisingSetStopped(advertisingSet: AdvertisingSet?) {
-            logManager.appendLog("onAdvertisingSetStopped():")
-        }
-    }
-     */
 
     private val advertiseCallback = object : AdvertiseCallback() {
         override fun onStartSuccess(settingsInEffect: AdvertiseSettings) {
@@ -252,6 +240,25 @@ class BLEManager(private val activity: MainActivity, private val logManager: Log
         else{
             logManager.appendLog("No one subscribes")
         }
+    }
+
+    fun testBLEThroughputOn(){
+        if(doTests){
+            val testByteArray = ByteArray(packetSizeBytes) { i ->
+                when {
+                    i < nrOfPackets/2 -> ('a' + i % 26).toByte() // fill first half bytes with lowercase letters from 'a' to 'z'
+                    else -> ('A' + i % 26).toByte() // fill the remaining half bytes with uppercase letters from 'A' to 'Z'
+                }
+            }
+
+            var i = 0
+
+            while(i < nrOfPackets){
+                bleNotify(testByteArray)
+                i++
+            }
+        }
+        else logManager.appendLog("doTests is false")
     }
 
 }

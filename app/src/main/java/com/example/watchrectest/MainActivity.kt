@@ -80,7 +80,7 @@ class MainActivity : Activity() {
         //_BLEManager.indicateTest()
 
         micManager.startRecording()
-        //micManager.testBLEThroughputOn()
+        //_BLEManager.testBLEThroughputOn()
     }
 
     fun onTapStopRec(view: View){
@@ -157,7 +157,9 @@ class MainActivity : Activity() {
     }
 
     fun startAdvertising(view: View){
-        _BLEManager.bleStartAdvertising()
+        runOnUiThread {
+            _BLEManager.bleStartAdvertising()
+        }
     }
 
     fun stopAdvertising(view: View){

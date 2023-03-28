@@ -38,6 +38,6 @@ class LogManager(private val activity: Activity) {
     }
 
     fun getCurrentTime(): String{
-        return SimpleDateFormat("HH:mm:ss", Locale.getDefault()).format(Date())
+        return SimpleDateFormat("HH:mm:ss:SSS", Locale.getDefault()).format(Date())
     }
 }
