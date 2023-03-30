@@ -9,7 +9,7 @@ import java.util.concurrent.ArrayBlockingQueue
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.Calendar
 
-private const val SAMPLING_RATE_IN_HZ = 12600
+private const val SAMPLING_RATE_IN_HZ = 12000
 
 private const val CHANNEL_CONFIG = AudioFormat.CHANNEL_IN_MONO
 
