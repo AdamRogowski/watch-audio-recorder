@@ -83,11 +83,11 @@ class MainActivity : Activity() {
         //_BLEManager.testBLEThroughputOn()
     }
 
-    fun onTapStopRec(view: View){
+    fun onTapStopSend(view: View){
         vibrate()
         //stopRecording()
 
-        micManager.stopRecording()
+        micManager.stopSending()
 
         //micManager.testBLEThroughputOff()
     }
@@ -135,14 +135,6 @@ class MainActivity : Activity() {
 
             start()
         }
-    }
-
-    private fun stopRecording() {
-        recorder?.apply {
-            stop()
-            release()
-        }
-        recorder = null
     }
 
     @RequiresApi(Build.VERSION_CODES.S)
