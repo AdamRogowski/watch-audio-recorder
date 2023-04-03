@@ -10,6 +10,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 import java.util.Calendar
 
 //ffmpeg supported freq: 64000 48000 44100 32000 24000 22050 16000 12000 11025 8000 7350
+//https://developer.android.com/reference/android/media/AudioFormat
 private const val SAMPLING_RATE_IN_HZ = 4000
 
 private const val CHANNEL_CONFIG = AudioFormat.CHANNEL_IN_MONO
