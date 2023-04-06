@@ -25,7 +25,7 @@ private const val BUFFER_DIVIDER = 3
 
 
 
-class MicManager(private val activity: Activity, private val logManager: LogManager, private val _BLEManager: BLEManager) {
+class MicManager(private val activity: Activity, private val logManager: LogManager, private val bluClassicManager: BluClassicManager) {
 
     private val minBufferSize = AudioRecord.getMinBufferSize(SAMPLING_RATE_IN_HZ,
         CHANNEL_CONFIG, AUDIO_FORMAT) * BUFFER_SIZE_FACTOR
@@ -106,13 +106,14 @@ class MicManager(private val activity: Activity, private val logManager: LogMana
 
     // Method for sending Audio
     private fun sendFromQueue() {
+
         logManager.appendLog("sendRecording started")
 
         while (sendingInProgress.get()) {
             try {
                 val arr = queue.take()
 
-                _BLEManager.bleNotify(arr)
+                bluClassicManager.writeOutputStream(arr)
                 logManager.appendLog(logManager.getCurrentTime() + " sent: " + arr.size.toString() + "B")
                 //_BLEManager.bleIndicate(testByteArray)
                 //logManager.appendLog(arr.size.toString())
@@ -122,6 +123,7 @@ class MicManager(private val activity: Activity, private val logManager: LogMana
             }
 
         }
+
     }
 
     // Stop Recording and free up resources

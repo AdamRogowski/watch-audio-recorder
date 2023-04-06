@@ -27,7 +27,7 @@ class MainActivity : Activity() {
     private var recorder: MediaRecorder? = null
     private var player: MediaPlayer? = null
 
-
+    private lateinit var bluetoothAdapter: BluetoothAdapter
 
     private lateinit var v: Vibrator
 
@@ -36,31 +36,11 @@ class MainActivity : Activity() {
     private lateinit var permissionsManager: PermissionsManager
     private lateinit var logManager: LogManager
 
-    private lateinit var _BLEManager: BLEManager
-
     private lateinit var micManager: MicManager
 
+    private lateinit var bluClassicManager: BluClassicManager
 
-    /*
-    // Requesting permission to RECORD_AUDIO
-    private var permissionsAccepted = false
-    private var permissions: Array<String> = arrayOf(Manifest.permission.RECORD_AUDIO)
-
-    override fun onRequestPermissionsResult(
-        requestCode: Int,
-        permissions: Array<String>,
-        grantResults: IntArray
-    ) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        permissionsAccepted = if (requestCode == REQUEST_PERMISSIONS_CODE) {
-            grantResults[0] == PackageManager.PERMISSION_GRANTED
-        } else {
-            false
-        }
-        if (!permissionsAccepted) finish()
-    }
-
-    */
+    private var testBool = true
 
 
 
@@ -149,17 +129,22 @@ class MainActivity : Activity() {
     }
 
     fun startAdvertising(view: View){
-        runOnUiThread {
-            _BLEManager.bleStartAdvertising()
-        }
+
+        val message = "hello"
+        val bytes = message.toByteArray()
+        logManager.appendLog("sent")
+        bluClassicManager!!.writeOutputStream(bytes)
+
+
     }
 
     fun stopAdvertising(view: View){
-        _BLEManager.bleStopAdvertising()
+        //_BLEManager.bleStopAdvertising()
+        bluClassicManager.stopSocket()
     }
 
     fun onTapTest(view: View){
-        _BLEManager.notifyTest()
+        //_BLEManager.notifyTest()
     }
 
 
@@ -195,11 +180,19 @@ class MainActivity : Activity() {
         permissionsManager = PermissionsManager(this, list, REQUEST_PERMISSIONS_CODE)
         permissionsManager.checkPermissions()
 
+        bluetoothAdapter = BluetoothAdapter.getDefaultAdapter()
+
         logManager = LogManager(this)
 
-        _BLEManager = BLEManager(this, logManager)
+        bluClassicManager = BluClassicManager(bluetoothAdapter, logManager)
 
-        micManager = MicManager(this, logManager, _BLEManager)
+        micManager = MicManager(this, logManager, bluClassicManager)
+
+        Thread {
+
+                bluClassicManager.listen()
+
+        }.start()
 
 
         //ActivityCompat.requestPermissions(this, permissions, REQUEST_PERMISSIONS_CODE)
