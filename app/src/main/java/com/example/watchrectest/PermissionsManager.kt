@@ -50,20 +50,4 @@ class PermissionsManager(private val activity: Activity, private val list: List<
             ActivityCompat.requestPermissions(activity, list.toTypedArray(), code)
         }
     }
-
-    /*
-
-    // Process permissions result
-    fun processPermissionsResult(requestCode: Int, permissions: Array<String>,
-                                 grantResults: IntArray): Boolean {
-        var result = 0
-        if (grantResults.isNotEmpty()) {
-            for (item in grantResults) {
-                result += item
-            }
-        }
-        if (result == PackageManager.PERMISSION_GRANTED) return true
-        return false
-    }
-    */
 }
