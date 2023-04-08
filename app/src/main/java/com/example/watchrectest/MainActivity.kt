@@ -5,7 +5,6 @@ import android.annotation.SuppressLint
 import android.app.Activity
 import android.bluetooth.*
 import android.content.Context
-import android.content.Intent
 import android.media.AudioFormat
 import android.media.MediaRecorder
 import android.os.*
@@ -13,10 +12,9 @@ import android.view.KeyEvent
 import android.view.View
 import androidx.annotation.RequiresApi
 import com.example.watchrectest.databinding.ActivityMainBinding
-import java.io.IOException
 import java.util.*
 import android.media.*
-import java.io.OutputStream
+import io.socket.client.Socket
 import java.nio.ByteBuffer
 import java.util.concurrent.ArrayBlockingQueue
 import java.util.concurrent.atomic.AtomicBoolean
@@ -29,14 +27,8 @@ private const val CHANNEL_CONFIG = AudioFormat.CHANNEL_IN_MONO
 private const val AUDIO_FORMAT = AudioFormat.ENCODING_PCM_8BIT
 private const val BUFFER_SIZE_FACTOR = 1
 private const val QUEUE_CAPACITY = 10000
-private const val BUFFER_DIVIDER = 1
 //-------------------------------------------------------------
 
-//-------------Constants of Bluetooth--------------------------
-private val MY_UUID = UUID.fromString("25AE1489-05D3-4C5B-8281-93D4E07420CF")
-private const val REQUEST_ENABLE_BLUETOOTH = 1
-private const val APP_NAME = "WatchRecTest"
-//-------------------------------------------------------------
 
 class MainActivity : Activity() {
     private lateinit var v: Vibrator
@@ -44,9 +36,7 @@ class MainActivity : Activity() {
     private lateinit var permissionsManager: PermissionsManager
     private lateinit var logManager: LogManager
     private lateinit var micManager: MicManager
-
-    private lateinit var bluetoothAdapter: BluetoothAdapter
-    private lateinit var streamSender: StreamSender
+    private lateinit var mSocket: Socket
 
     @RequiresApi(Build.VERSION_CODES.S)
     @SuppressLint("MissingPermission")
@@ -67,22 +57,16 @@ class MainActivity : Activity() {
         // Initialize a list of required permissions to request runtime
         val list = listOf(
             Manifest.permission.RECORD_AUDIO,
-            Manifest.permission.BLUETOOTH,
-            Manifest.permission.BLUETOOTH_ADMIN,
-            Manifest.permission.BLUETOOTH_CONNECT,
-            Manifest.permission.BLUETOOTH_ADVERTISE
+            Manifest.permission.VIBRATE
         )
+
+
 
         permissionsManager = PermissionsManager(this, list, REQUEST_PERMISSIONS_CODE)
         permissionsManager.checkPermissions()
 
         logManager = LogManager(this)
         micManager = MicManager()
-        bluetoothAdapter = BluetoothAdapter.getDefaultAdapter()
-        if (!bluetoothAdapter.isEnabled) {
-            val enableIntent = Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE)
-            startActivityForResult(enableIntent, REQUEST_ENABLE_BLUETOOTH)
-        }
     }
 
     private fun vibrate(){
@@ -95,9 +79,16 @@ class MainActivity : Activity() {
     }
 
     fun startAdvertising(view: View){
-        val serverClass = ServerClass()
-        serverClass.start()
-        logManager.appendLog("server started")
+        //------ The following lines connects the Android app to the server.-----
+        SocketHandler.setSocket()
+        SocketHandler.establishConnection()
+        mSocket = SocketHandler.getSocket()
+        logManager.appendLog("get Socket = $mSocket")
+        mSocket.on("response") { args ->
+            val responseCode = args[0] as Int
+            logManager.appendLog("Response code: $responseCode")
+        }
+        //-----------------------------------------------------------------------
     }
 
     fun stopAdvertising(view: View){
@@ -117,7 +108,7 @@ class MainActivity : Activity() {
     override fun onKeyDown(keyCode: Int, event: KeyEvent): Boolean {
         return run {
             // process bottomKeyPress
-            logManager.appendLog("udalo sie")
+            logManager.appendLog("onKeyDown")
             vibrateLong()
             micManager.stopRecording()
             true
@@ -158,34 +149,18 @@ class MainActivity : Activity() {
 
         private fun recordIntoQueue(){
             val buffer = ByteBuffer.allocateDirect(minBufferSize)
-            //val segmentSize = minBufferSize / BUFFER_DIVIDER
-            val combArraySize = minBufferSize * BUFFER_DIVIDER
 
             while (recordingInProgress.get()) {
-
-                //var combArr = byteArrayOf()
-                //for(i in 0 until BUFFER_DIVIDER){
                 try {
                     buffer.position(0) // Reset the buffer position to zero
                     buffer.let { recorder?.read(it, minBufferSize) }
 
                     val arr = ByteArray(buffer.remaining())
                     buffer.get(arr)
-
-                    /*
-                    for( i in 0 until BUFFER_DIVIDER){
-                        val subarray = arr.copyOfRange(i, i + segmentSize)
-                        queue.add(subarray)
-                        logManager.appendLog("Added to queue, queue size: " + queue.size.toString())
-                    }
-                     */
-                    //combArr += arr
                     queue.add(arr)
                 } catch (e: Exception) {
                     logManager.appendLog("Error when recording into queue, e: " + e.message)
                 }
-                //}
-                //queue.add(combArr)
                 logManager.appendLog(logManager.getCurrentTime() + " Added to queue")
             }
         }
@@ -197,7 +172,8 @@ class MainActivity : Activity() {
                 try {
                     val arr = queue.take()
 
-                    streamSender.write(arr)
+                    mSocket.emit("audioData", arr)
+
                     logManager.appendLog(logManager.getCurrentTime() + " sent: " + arr.size.toString() + "B")
 
                 } catch (e: Exception) {
@@ -223,60 +199,6 @@ class MainActivity : Activity() {
             sendingThread = null
             logManager.appendLog("sending stopped")
 
-        }
-    }
-
-    @SuppressLint("MissingPermission")
-    private inner class ServerClass : Thread() {
-        private var serverSocket: BluetoothServerSocket? = null
-
-        init {
-            try {
-                serverSocket = bluetoothAdapter.listenUsingRfcommWithServiceRecord(APP_NAME, MY_UUID)
-            } catch (e: IOException) {
-                logManager.appendLog("error in assigning server socket, e: $e")
-            }
-        }
-
-        override fun run() {
-            var socket: BluetoothSocket?
-            while (true) {
-                try {
-                    socket = serverSocket?.accept()
-                } catch (e: IOException) {
-                    logManager.appendLog("state connection failed, e: $e")
-                    break
-                }
-
-                if (socket != null) {
-                    streamSender = StreamSender(socket)
-                    streamSender.start()
-                    logManager.appendLog("state connected, stream set")
-                    break
-                }
-            }
-        }
-    }
-
-    private inner class StreamSender(socket: BluetoothSocket) : Thread() {
-        private val outputStream: OutputStream
-
-        init {
-            var tempOutput: OutputStream? = null
-            try {
-                tempOutput = socket.outputStream
-            } catch (e: IOException) {
-                e.printStackTrace()
-            }
-            outputStream = tempOutput!!
-        }
-
-        fun write(bytes: ByteArray) {
-            try {
-                outputStream.write(bytes)
-            } catch (e: IOException) {
-                e.printStackTrace()
-            }
         }
     }
 }
