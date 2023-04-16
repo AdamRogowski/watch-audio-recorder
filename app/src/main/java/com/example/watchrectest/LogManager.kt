@@ -8,36 +8,42 @@ import android.util.Log
 import android.view.View
 import android.widget.ScrollView
 import android.widget.TextView
+import java.lang.ref.WeakReference
 import java.text.SimpleDateFormat
 import java.util.*
 
-class LogManager(private val activity: Activity) {
+object LogManager{
 
-    private val textViewLog: TextView
-        get() = activity.findViewById(R.id.textViewLog)
-    private val scrollViewLog: ScrollView
-        get() = activity.findViewById(R.id.scrollViewLog)
+    private var activityRef: WeakReference<Activity>? = null
+    private val textViewLog: TextView?
+        get() = activityRef?.get()?.findViewById(R.id.textViewLog)
+    private val scrollViewLog: ScrollView?
+        get() = activityRef?.get()?.findViewById(R.id.scrollViewLog)
+
+    fun setActivity(activity: Activity) {
+        activityRef = WeakReference(activity)
+    }
 
     @SuppressLint("SetTextI18n")
     fun appendLog(message: String) {
         Log.d("appendLog", message)
-        activity.runOnUiThread {
-            textViewLog.text = textViewLog.text.toString() + "\n$message"
+        activityRef?.get()?.runOnUiThread {
+            textViewLog?.text = textViewLog?.text.toString() + "\n$message"
 
             // wait for the textView to update
             Handler(Looper.getMainLooper()).postDelayed({
-                scrollViewLog.fullScroll(View.FOCUS_DOWN)
+                scrollViewLog?.fullScroll(View.FOCUS_DOWN)
             }, 20)
         }
     }
 
     @SuppressLint("SetTextI18n")
     fun clearLog() {
-        textViewLog.text = "Logs:"
+        textViewLog?.text = "Logs:"
         appendLog("log cleared")
     }
 
     fun getCurrentTime(): String{
-        return SimpleDateFormat("HH:mm:ss:SSS", Locale.getDefault()).format(Date())
+        return SimpleDateFormat("HH:mm:ss", Locale.getDefault()).format(Date())
     }
 }

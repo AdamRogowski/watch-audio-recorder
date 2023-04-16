@@ -1,5 +1,6 @@
 package com.example.watchrectest
 
+import android.annotation.SuppressLint
 import android.bluetooth.*
 import android.bluetooth.BluetoothManager
 import android.bluetooth.le.AdvertiseCallback
@@ -13,7 +14,7 @@ private const val SERVICE_UUID = "25AE1449-05D3-4C5B-8281-93D4E07420CF"
 private const val CHAR_FOR_NOTIFY_UUID = "25AE1494-05D3-4C5B-8281-93D4E07420CF"
 private const val CCC_DESCRIPTOR_UUID = "00002930-0000-1000-8000-00805f9b34fb"
 
-class BLEManager(private val activity: MainActivity, private val logManager: LogManager) {
+class BLEManager(private val activity: MainActivity) {
 
     //Throughput test--------------------------------------------------------------------------------------------
     private val doTests: Boolean = false
@@ -43,7 +44,7 @@ class BLEManager(private val activity: MainActivity, private val logManager: Log
 
 
     private fun updateSubscribers() {
-        logManager.appendLog("Currently subscribers: ${subscribedDevices.count()}")
+        LogManager.appendLog("Currently subscribers: ${subscribedDevices.count()}")
     }
 
     private fun anyoneSubscribes(): Boolean{
@@ -60,11 +61,11 @@ class BLEManager(private val activity: MainActivity, private val logManager: Log
         override fun onConnectionStateChange(device: BluetoothDevice, status: Int, newState: Int) {
             activity.runOnUiThread {
                 if (newState == BluetoothProfile.STATE_CONNECTED){
-                    logManager.appendLog("Central device did connect")
+                    LogManager.appendLog("Central device did connect")
                     updateSubscribers()
                 }
                 else {
-                    logManager.appendLog("Central device did disconnect")
+                    LogManager.appendLog("Central device did disconnect")
                     subscribedDevices.remove(device)
                     updateSubscribers()
                 }
@@ -72,17 +73,17 @@ class BLEManager(private val activity: MainActivity, private val logManager: Log
         }
 
         override fun onNotificationSent(device: BluetoothDevice, status: Int) {
-            logManager.appendLog(logManager.getCurrentTime() + " notification sent status=$status")
+            LogManager.appendLog(LogManager.getCurrentTime() + " notification sent status=$status")
 
             /*
             testIterator++
-            if(testIterator == 1) start = logManager.getCurrentTime()
+            if(testIterator == 1) start = LogManager.getCurrentTime()
             else if(testIterator == nrOfPackets){
-                stop = logManager.getCurrentTime()
+                stop = LogManager.getCurrentTime()
                 //HH:mm:ss:SSS
                 val period: Double = stop.slice(0..1).toDouble() * 3600 + stop.slice(3..4).toDouble() * 60 + stop.slice(6..7).toDouble() + stop.slice(9..11).toDouble() / 1000 - (start.slice(0..1).toDouble() * 3600 + start.slice(3..4).toDouble() * 60 + start.slice(6..7).toDouble() + start.slice(9..11).toDouble() / 1000)
                 val throughput: Int = (nrOfPackets * packetSizeBytes * 8 / 1000 / period).toInt()
-                logManager.appendLog("measured throughput: $throughput kbps")
+                LogManager.appendLog("measured throughput: $throughput kbps")
                 testIterator = 0
             }
 
@@ -90,14 +91,15 @@ class BLEManager(private val activity: MainActivity, private val logManager: Log
 
         }
 
+        @SuppressLint("MissingPermission")
         override fun onDescriptorReadRequest(device: BluetoothDevice, requestId: Int, offset: Int, descriptor: BluetoothGattDescriptor) {
             var log = "onDescriptorReadRequest"
             if (descriptor.uuid == UUID.fromString(CCC_DESCRIPTOR_UUID)) {
                 val returnValue = if (subscribedDevices.contains(device)) {
-                    log += " CCCD response=ENABLE_NOTIFICATION"
+                    log += " CCC_D response=ENABLE_NOTIFICATION"
                     BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE
                 } else {
-                    log += " CCCD response=DISABLE_NOTIFICATION"
+                    log += " CCC_D response=DISABLE_NOTIFICATION"
                     BluetoothGattDescriptor.DISABLE_NOTIFICATION_VALUE
                 }
                 gattServer?.sendResponse(device, requestId, BluetoothGatt.GATT_SUCCESS, 0, returnValue)
@@ -105,9 +107,10 @@ class BLEManager(private val activity: MainActivity, private val logManager: Log
                 log += " unknown uuid=${descriptor.uuid}"
                 gattServer?.sendResponse(device, requestId, BluetoothGatt.GATT_FAILURE, 0, null)
             }
-            logManager.appendLog(log)
+            LogManager.appendLog(log)
         }
 
+        @SuppressLint("MissingPermission")
         override fun onDescriptorWriteRequest(device: BluetoothDevice, requestId: Int, descriptor: BluetoothGattDescriptor, preparedWrite: Boolean, responseNeeded: Boolean, offset: Int, value: ByteArray) {
             var strLog = "onDescriptorWriteRequest"
             if (descriptor.uuid == UUID.fromString(CCC_DESCRIPTOR_UUID)) {
@@ -133,38 +136,26 @@ class BLEManager(private val activity: MainActivity, private val logManager: Log
                     gattServer?.sendResponse(device, requestId, BluetoothGatt.GATT_FAILURE, 0, null)
                 }
             }
-            logManager.appendLog(strLog)
+            LogManager.appendLog(strLog)
         }
     }
     //-----------------------------------------------------------------------------------------------------------
 
 
     //BLE advertising--------------------------------------------------------------------------------------------
-
-
-    /*
-    private fun prepareAndStartAdvertising() {
-        ensureBluetoothCanBeUsed { isSuccess, message ->
-            runOnUiThread {
-                appendLog(message)
-                if (isSuccess) bleStartAdvertising()
-            }
-        }
-    }
-
-     */
-
+    @SuppressLint("MissingPermission")
     fun bleStartAdvertising() {
         bleStartGattServer()
         bleAdvertiser.startAdvertising(advertiseSettings, advertiseData, advertiseCallback)
-        //bleAdvertiser.startAdvertisingSet(advertiseParameters.build(), advertiseData, null, null, null, callback)
     }
 
+    @SuppressLint("MissingPermission")
     fun bleStopAdvertising() {
         bleStopGattServer()
         bleAdvertiser.stopAdvertising(advertiseCallback)
     }
 
+    @SuppressLint("MissingPermission")
     private fun bleStartGattServer() {
         val gattServer = bluetoothManager.openGattServer(activity, gattServerCallback)
         val service = BluetoothGattService(UUID.fromString(SERVICE_UUID), BluetoothGattService.SERVICE_TYPE_PRIMARY)
@@ -180,18 +171,20 @@ class BLEManager(private val activity: MainActivity, private val logManager: Log
         val result = gattServer.addService(service)
         this.gattServer = gattServer
 
-        logManager.appendLog("addService " + when(result) {
+        LogManager.appendLog("addService " + when(result) {
             true -> "OK"
             false -> "fail"
         })
     }
 
+    @SuppressLint("MissingPermission")
     private fun bleStopGattServer() {
         gattServer?.close()
         gattServer = null
-        logManager.appendLog("gattServer stopped")
+        LogManager.appendLog("gattServer stopped")
     }
 
+    @SuppressLint("MissingPermission")
     fun bleNotify(data: ByteArray) {
         charForNotify?.let {
             it.value = data
@@ -214,7 +207,7 @@ class BLEManager(private val activity: MainActivity, private val logManager: Log
 
     private val advertiseCallback = object : AdvertiseCallback() {
         override fun onStartSuccess(settingsInEffect: AdvertiseSettings) {
-            logManager.appendLog("Advertise start success\n$SERVICE_UUID")
+            LogManager.appendLog("Advertise start success\n$SERVICE_UUID")
         }
 
         override fun onStartFailure(errorCode: Int) {
@@ -226,7 +219,7 @@ class BLEManager(private val activity: MainActivity, private val logManager: Log
                 ADVERTISE_FAILED_FEATURE_UNSUPPORTED -> "\nADVERTISE_FAILED_FEATURE_UNSUPPORTED"
                 else -> ""
             }
-            logManager.appendLog("Advertise start failed: errorCode=$errorCode $desc")
+            LogManager.appendLog("Advertise start failed: errorCode=$errorCode $desc")
         }
     }
     //-----------------------------------------------------------------------------------------------------------
@@ -235,10 +228,10 @@ class BLEManager(private val activity: MainActivity, private val logManager: Log
         val data = byteArrayOf(0x48, 101, 108, 108, 111)
         if(anyoneSubscribes()){
             bleNotify(data)
-            logManager.appendLog("notify test sent")
+            LogManager.appendLog("notify test sent")
         }
         else{
-            logManager.appendLog("No one subscribes")
+            LogManager.appendLog("No one subscribes")
         }
     }
 
@@ -258,7 +251,6 @@ class BLEManager(private val activity: MainActivity, private val logManager: Log
                 i++
             }
         }
-        else logManager.appendLog("doTests is false")
+        else LogManager.appendLog("doTests is false")
     }
-
 }
