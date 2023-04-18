@@ -8,19 +8,20 @@ import android.util.Log
 import android.view.View
 import android.widget.ScrollView
 import android.widget.TextView
+import androidx.appcompat.app.AppCompatActivity
 import java.lang.ref.WeakReference
 import java.text.SimpleDateFormat
 import java.util.*
 
 object LogManager{
 
-    private var activityRef: WeakReference<Activity>? = null
+    private var activityRef: WeakReference<AppCompatActivity>? = null
     private val textViewLog: TextView?
         get() = activityRef?.get()?.findViewById(R.id.textViewLog)
     private val scrollViewLog: ScrollView?
         get() = activityRef?.get()?.findViewById(R.id.scrollViewLog)
 
-    fun setActivity(activity: Activity) {
+    fun setActivity(activity: AppCompatActivity) {
         activityRef = WeakReference(activity)
     }
 

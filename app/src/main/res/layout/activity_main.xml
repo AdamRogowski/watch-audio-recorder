@@ -14,49 +14,68 @@
         android:padding="@dimen/inner_frame_layout_padding"
         app:layout_boxedEdges="all">
 
-
-        <Button
-            android:id="@+id/buttonStartRec"
-            android:layout_width="70dp"
+        <com.google.android.material.switchmaterial.SwitchMaterial
+            android:id="@+id/switch_Gatt"
+            android:layout_width="100dp"
             android:layout_height="wrap_content"
-            android:onClick="startAdvertising"
-            android:text="Start"
+            android:text="Gatt"
             android:layout_marginTop="1dp"
-            android:layout_marginStart="1dp"/>
+            android:layout_marginStart="1dp"
+            app:useMaterialThemeColors="false" />
 
-        <Button
-            android:id="@+id/buttonStopRec"
-            android:layout_width="70dp"
-            android:layout_height="wrap_content"
-            android:onClick="stopAdvertising"
-            android:text="Stop"
-            android:layout_marginTop="40dp"
-            android:layout_marginStart="1dp"/>
 
-        <Button
-            android:id="@+id/buttonPlay"
-            android:layout_width="70dp"
+        <com.google.android.material.switchmaterial.SwitchMaterial
+            android:id="@+id/switch_Rec"
+            android:layout_width="100dp"
             android:layout_height="wrap_content"
-            android:onClick="onTapStartRec"
-            android:text="Play"
-            android:layout_marginTop="1dp"
-            android:layout_marginStart="65dp"/>
+            android:text="Send"
+            android:layout_marginTop="30dp"
+            android:layout_marginStart="1dp"
+            app:useMaterialThemeColors="false" />
 
-        <Button
-            android:id="@+id/buttonPause"
-            android:layout_width="70dp"
-            android:layout_height="wrap_content"
-            android:onClick="onTapStopSend"
-            android:text="Pause"
-            android:layout_marginTop="40dp"
-            android:layout_marginStart="65dp"/>
+        <!--
+                <Button
+                    android:id="@+id/buttonStartRec"
+                    android:layout_width="70dp"
+                    android:layout_height="wrap_content"
+                    android:onClick="startAdvertising"
+                    android:text="Start"
+                    android:layout_marginTop="1dp"
+                    android:layout_marginStart="1dp"/>
+
+                <Button
+                    android:id="@+id/buttonStopRec"
+                    android:layout_width="70dp"
+                    android:layout_height="wrap_content"
+                    android:onClick="stopAdvertising"
+                    android:text="Stop"
+                    android:layout_marginTop="40dp"
+                    android:layout_marginStart="1dp"/>
+
+                <Button
+                    android:id="@+id/buttonPlay"
+                    android:layout_width="70dp"
+                    android:layout_height="wrap_content"
+                    android:onClick="onTapStartRec"
+                    android:text="Play"
+                    android:layout_marginTop="1dp"
+                    android:layout_marginStart="65dp"/>
+
+                <Button
+                    android:id="@+id/buttonPause"
+                    android:layout_width="70dp"
+                    android:layout_height="wrap_content"
+                    android:onClick="onTapStopSend"
+                    android:text="Pause"
+                    android:layout_marginTop="40dp"
+                    android:layout_marginStart="65dp"/>
+                -->
 
         <ScrollView
             android:id="@+id/scrollViewLog"
             android:layout_width="match_parent"
-            android:layout_height="50dp"
-            android:layout_marginTop="75dp"
-            android:layout_weight="1">
+            android:layout_height="60dp"
+            android:layout_marginTop="60dp">
 
             <TextView
                 android:id="@+id/textViewLog"

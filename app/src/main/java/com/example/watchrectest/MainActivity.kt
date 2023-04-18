@@ -1,19 +1,22 @@
 package com.example.watchrectest
 
 import android.Manifest
-import android.app.Activity
 import android.bluetooth.*
 import android.content.Context
 import android.os.*
 import android.view.KeyEvent
 import android.view.View
 import androidx.annotation.RequiresApi
+import androidx.appcompat.app.AppCompatActivity
 import com.example.watchrectest.databinding.ActivityMainBinding
 import java.util.*
+import android.util.Log
+import android.widget.CompoundButton
+import com.google.android.material.switchmaterial.SwitchMaterial
 
 private const val REQUEST_PERMISSIONS_CODE = 200
 
-class MainActivity : Activity() {
+class MainActivity : AppCompatActivity() {
 
     private lateinit var v: Vibrator
 
@@ -25,6 +28,43 @@ class MainActivity : Activity() {
 
     private lateinit var micManager: MicManager
 
+    private lateinit var switchGatt: SwitchMaterial
+
+    private lateinit var switchRec: SwitchMaterial
+
+    private val switchGattChangeListener = CompoundButton.OnCheckedChangeListener { _, isChecked ->
+        if (isChecked) {
+            _BLEManager.bleStartAdvertising()
+        } else {
+            _BLEManager.bleStopAdvertising()
+            if(switchRec.isChecked){
+                micManager.stopAction()
+                switchRec.isChecked = false
+            }
+        }
+    }
+
+    private val switchRecChangeListener = CompoundButton.OnCheckedChangeListener { _, isChecked ->
+        if (isChecked) {
+            if(switchGatt.isChecked && _BLEManager.anyoneSubscribes()){
+                vibrate()
+                micManager.startRecording()
+            }
+            else{
+                LogManager.appendLog("No one subscribes")
+                switchRec.isChecked = false
+            }
+        } else {
+            vibrate()
+            micManager.stopAction()
+            _BLEManager.bleStopAdvertising()
+            switchGatt.isChecked = false
+        }
+    }
+
+    private fun tapSwitch(){
+        switchRec.isChecked = true
+    }
 
 
     private fun vibrate(){
@@ -55,7 +95,7 @@ class MainActivity : Activity() {
             // process bottomKeyPress
             LogManager.appendLog("udalo sie")
             vibrateLong()
-            micManager.stopRecording()
+            micManager.stopAction()
             true
         }
     }
@@ -78,6 +118,16 @@ class MainActivity : Activity() {
     @RequiresApi(Build.VERSION_CODES.S)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        Log.d("TAG", "message")
+
+        binding = ActivityMainBinding.inflate(layoutInflater)
+        setContentView(R.layout.activity_main)
+        switchGatt = findViewById(R.id.switch_Gatt)
+        switchRec = findViewById(R.id.switch_Rec)
+
+        switchGatt.setOnCheckedChangeListener(switchGattChangeListener)
+        switchRec.setOnCheckedChangeListener(switchRecChangeListener)
+
 
         v = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             val vibratorManager =
@@ -106,10 +156,6 @@ class MainActivity : Activity() {
         _BLEManager = BLEManager(this)
 
         micManager = MicManager(_BLEManager)
-
-
-        binding = ActivityMainBinding.inflate(layoutInflater)
-        setContentView(R.layout.activity_main)
     }
 
     override fun onStop() {

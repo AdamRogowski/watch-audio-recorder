@@ -47,7 +47,7 @@ class BLEManager(private val activity: MainActivity) {
         LogManager.appendLog("Currently subscribers: ${subscribedDevices.count()}")
     }
 
-    private fun anyoneSubscribes(): Boolean{
+    fun anyoneSubscribes(): Boolean{
         return subscribedDevices.isNotEmpty()
     }
 

@@ -35,7 +35,7 @@ class MicManager(private val _BLEManager: BLEManager) {
     private var recordingThread: Thread? = null
     private var sendingThread: Thread? = null
 
-    private var betterQuality: Boolean = false
+    private var worstQuality: Boolean = true
 
 
     private val queue: ArrayBlockingQueue<ByteArray> = ArrayBlockingQueue(QUEUE_CAPACITY)
@@ -47,7 +47,7 @@ class MicManager(private val _BLEManager: BLEManager) {
         LogManager.appendLog("Assigning recorder")
 
         // Start Recording
-        recorder = if(betterQuality){
+        recorder = if(worstQuality){
             AudioRecord(MediaRecorder.AudioSource.DEFAULT, SAMPLING_RATE_IN_HZ, CHANNEL_CONFIG, AUDIO_FORMAT, minBufferSize)}
         else AudioRecord(MediaRecorder.AudioSource.DEFAULT, SAMPLING_RATE_QUALITY, CHANNEL_CONFIG, AUDIO_FORMAT, qualityBufferSize)
 
@@ -56,7 +56,7 @@ class MicManager(private val _BLEManager: BLEManager) {
         recordingInProgress.set(true)
         sendingInProgress.set(true)
 
-        recordingThread = if(betterQuality){
+        recordingThread = if(worstQuality){
             Thread({ recordIntoQueue() }, "AudioRecorder Thread")
         } else Thread({ recordQualityIntoQueue() }, "AudioRecorder Thread")
         sendingThread = Thread({ sendFromQueue() }, "Sending Thread")
@@ -136,15 +136,17 @@ class MicManager(private val _BLEManager: BLEManager) {
     }
 
     // Stop Recording and free up resources
-    fun stopRecording() {
+    fun stopAction() {
         if (recorder != null) {
             recordingInProgress.set(false)
             recorder!!.stop()
             recorder!!.release()
             recorder = null
             recordingThread = null
+            sendingInProgress.set(false)
             sendingThread = null
-            LogManager.appendLog("recording stopped")
+            queue.clear()
+            LogManager.appendLog("recording and sending stopped")
         }
     }
 
@@ -156,6 +158,6 @@ class MicManager(private val _BLEManager: BLEManager) {
     }
 
     fun setBetterQuality(value: Boolean){
-        betterQuality = value
+        worstQuality = value
     }
 }
