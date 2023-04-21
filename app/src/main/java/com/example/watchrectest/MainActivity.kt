@@ -16,6 +16,7 @@ import com.example.watchrectest.databinding.ActivityMainBinding
 import java.io.IOException
 import java.util.*
 import android.media.*
+import android.view.WindowManager
 import java.io.OutputStream
 import java.nio.ByteBuffer
 import java.util.concurrent.ArrayBlockingQueue
@@ -24,7 +25,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 private const val REQUEST_PERMISSIONS_CODE = 200
 
 //-------------Constants for MicManager------------------------
-private const val SAMPLING_RATE_IN_HZ = 24000
+private const val SAMPLING_RATE_IN_HZ = 4000
 private const val CHANNEL_CONFIG = AudioFormat.CHANNEL_IN_MONO
 private const val AUDIO_FORMAT = AudioFormat.ENCODING_PCM_8BIT
 private const val BUFFER_SIZE_FACTOR = 1
@@ -54,6 +55,8 @@ class MainActivity : Activity() {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(R.layout.activity_main)
+
+        window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
 
         v = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             val vibratorManager =
@@ -213,8 +216,9 @@ class MainActivity : Activity() {
                 recorder!!.release()
                 recorder = null
                 recordingThread = null
+                sendingInProgress.set(false)
                 sendingThread = null
-                logManager.appendLog("recording stopped")
+                logManager.appendLog("recording and sending stopped")
             }
         }
 
