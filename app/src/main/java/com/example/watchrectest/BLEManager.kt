@@ -63,11 +63,13 @@ class BLEManager(private val activity: MainActivity) {
                 if (newState == BluetoothProfile.STATE_CONNECTED){
                     LogManager.appendLog("Central device did connect")
                     updateSubscribers()
+                    UIStateManager.setUIState(UIState.CONNECTED_READY)
                 }
                 else {
                     LogManager.appendLog("Central device did disconnect")
                     subscribedDevices.remove(device)
                     updateSubscribers()
+                    UIStateManager.setUIState(UIState.NO_SUBSCRIBER)
                 }
             }
         }

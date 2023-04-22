@@ -6,13 +6,13 @@ import android.content.Context
 import android.os.*
 import android.view.KeyEvent
 import android.view.View
+import android.view.WindowManager
+import android.widget.CompoundButton
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import com.example.watchrectest.databinding.ActivityMainBinding
-import java.util.*
-import android.util.Log
-import android.widget.CompoundButton
 import com.google.android.material.switchmaterial.SwitchMaterial
+import java.util.*
 
 private const val REQUEST_PERMISSIONS_CODE = 200
 
@@ -32,93 +32,130 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var switchRec: SwitchMaterial
 
+    private var wakeLock: PowerManager.WakeLock? = null
+
+    private fun acquireWakeLock() {
+        val powerManager = getSystemService(Context.POWER_SERVICE) as PowerManager
+        wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "MyApp::MyWakeLock")
+        wakeLock?.acquire(10*60*1000L /*10 minutes*/)
+    }
+
+    private fun releaseWakeLock() {
+        wakeLock?.release()
+        wakeLock = null
+    }
+
     private val switchGattChangeListener = CompoundButton.OnCheckedChangeListener { _, isChecked ->
         if (isChecked) {
             _BLEManager.bleStartAdvertising()
+            UIStateManager.setUIState(UIState.NO_SUBSCRIBER)
         } else {
             _BLEManager.bleStopAdvertising()
-            if(switchRec.isChecked){
-                micManager.stopAction()
-                switchRec.isChecked = false
-            }
+            if(switchRec.isChecked) switchRec.isChecked = false
+            UIStateManager.setUIState(UIState.DISCONNECTED)
         }
     }
 
     private val switchRecChangeListener = CompoundButton.OnCheckedChangeListener { _, isChecked ->
         if (isChecked) {
             if(switchGatt.isChecked && _BLEManager.anyoneSubscribes()){
-                vibrate()
-                micManager.startRecording()
+                UIStateManager.setUIState(UIState.SENDING)
+                startMic()
             }
             else{
                 LogManager.appendLog("No one subscribes")
                 switchRec.isChecked = false
             }
         } else {
-            vibrate()
-            micManager.stopAction()
-            _BLEManager.bleStopAdvertising()
-            switchGatt.isChecked = false
+            stopMic()
+            if(switchGatt.isChecked) switchGatt.isChecked = false
         }
-    }
-
-    private fun tapSwitch(){
-        switchRec.isChecked = true
-    }
-
-
-    private fun vibrate(){
-        v.vibrate(VibrationEffect.createOneShot(50, VibrationEffect.DEFAULT_AMPLITUDE))
-    }
-
-    @RequiresApi(Build.VERSION_CODES.Q)
-    private fun vibrateLong(){
-        v.vibrate(VibrationEffect.createOneShot(300, VibrationEffect.DEFAULT_AMPLITUDE))
-    }
-
-
-    fun onTapStartRec(view: View){
-        vibrate()
-
-        micManager.startRecording()
-    }
-
-    fun onTapStopSend(view: View){
-        vibrate()
-
-        micManager.stopSending()
     }
 
     @RequiresApi(Build.VERSION_CODES.S)
     override fun onKeyDown(keyCode: Int, event: KeyEvent): Boolean {
-        return run {
-            // process bottomKeyPress
-            LogManager.appendLog("udalo sie")
-            vibrateLong()
-            micManager.stopAction()
-            true
+        if(!switchGatt.isChecked){
+            return run {
+                switchGatt.isChecked = true
+                true
+            }
+        }
+        else if(switchGatt.isChecked && _BLEManager.anyoneSubscribes()){
+
+            return if(!switchRec.isChecked && !micManager.getRecordingInProgress() && !micManager.getSendingInProgress()){
+                run {
+                    switchRec.isChecked = true
+                    true
+                }
+            } else {
+                run {
+                    switchRec.isChecked = false
+                    true
+                }
+            }
+        }
+        else{
+            LogManager.appendLog("No one subscribes")
+            return false
         }
     }
 
-    fun startAdvertising(view: View){
-        runOnUiThread {
-            _BLEManager.bleStartAdvertising()
-        }
+    private fun startMic(){
+        vibrateThrice()
+        micManager.startRecording()
+        fakeSleepModeOn()
+        //acquireWakeLock()
     }
 
-    fun stopAdvertising(view: View){
-        _BLEManager.bleStopAdvertising()
+    private fun stopMic(){
+        vibrate()
+        micManager.stopAction()
+        fakeSleepModeOff()
+        //releaseWakeLock()
     }
 
     fun onTapTest(view: View){
         _BLEManager.notifyTest()
     }
 
+    private fun vibrate(){
+        v.vibrate(VibrationEffect.createOneShot(50, VibrationEffect.DEFAULT_AMPLITUDE))
+    }
+
+    private fun vibrateThrice(){
+        v.vibrate(VibrationEffect.createOneShot(300, VibrationEffect.DEFAULT_AMPLITUDE))
+    }
+
+    private fun fakeSleepModeOn(){
+        // Change screen brightness to minimum
+        val brightness = 0
+        val layoutParam = window.attributes
+        layoutParam.screenBrightness = brightness.toFloat()
+        window.attributes = layoutParam
+
+        // Keep the screen on
+        window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+    }
+
+    private fun fakeSleepModeOff(){
+        // Change screen brightness back to normal
+        val brightness = -1 // -1 means use the system default brightness
+        val layoutParam = window.attributes
+        layoutParam.screenBrightness = brightness.toFloat()
+        window.attributes = layoutParam
+
+        // Allow the screen to turn off automatically
+        window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+    }
+
 
     @RequiresApi(Build.VERSION_CODES.S)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        Log.d("TAG", "message")
+
+        //window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+
+
 
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(R.layout.activity_main)
@@ -151,7 +188,8 @@ class MainActivity : AppCompatActivity() {
         permissionsManager = PermissionsManager(this, list, REQUEST_PERMISSIONS_CODE)
         permissionsManager.checkPermissions()
 
-        LogManager.setActivity(this)
+        //LogManager.setActivity(this)
+        UIStateManager.setActivity(this)
 
         _BLEManager = BLEManager(this)
 
@@ -161,4 +199,13 @@ class MainActivity : AppCompatActivity() {
     override fun onStop() {
         super.onStop()
     }
+
+    /*
+    override fun onResume() {
+        super.onResume()
+
+        val intent = Intent(this, MainActivity::class.java)
+        intent.flags = Intent.FLAG_ACTIVITY_REORDER_TO_FRONT
+        startActivity(intent)
+    }*/
 }

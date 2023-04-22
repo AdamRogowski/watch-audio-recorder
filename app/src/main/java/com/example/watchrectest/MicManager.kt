@@ -135,22 +135,22 @@ class MicManager(private val _BLEManager: BLEManager) {
         }
     }
 
-    // Stop Recording and free up resources
+    // Stop Recording and sending and free up resources
     fun stopAction() {
         if (recorder != null) {
             recordingInProgress.set(false)
+            sendingInProgress.set(false)
             recorder!!.stop()
             recorder!!.release()
             recorder = null
             recordingThread = null
-            sendingInProgress.set(false)
             sendingThread = null
             queue.clear()
             LogManager.appendLog("recording and sending stopped")
         }
     }
 
-    // Stop Recording and free up resources
+    // Stop sending and free up resources
     fun stopSending() {
         sendingInProgress.set(false)
         sendingThread = null
@@ -160,4 +160,14 @@ class MicManager(private val _BLEManager: BLEManager) {
     fun setBetterQuality(value: Boolean){
         worstQuality = value
     }
+
+    fun getRecordingInProgress(): Boolean{
+        return recordingInProgress.get()
+    }
+
+    fun getSendingInProgress(): Boolean{
+        return sendingInProgress.get()
+    }
+
+
 }

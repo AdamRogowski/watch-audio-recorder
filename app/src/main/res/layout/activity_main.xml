@@ -17,21 +17,40 @@
         <com.google.android.material.switchmaterial.SwitchMaterial
             android:id="@+id/switch_Gatt"
             android:layout_width="100dp"
-            android:layout_height="wrap_content"
-            android:text="Gatt"
+            android:layout_height="40dp"
+            android:text="@string/switch_gatt"
+            android:textColor="@color/switch_text_color"
             android:layout_marginTop="1dp"
             android:layout_marginStart="1dp"
-            app:useMaterialThemeColors="false" />
+            app:useMaterialThemeColors="false"
+            app:thumbTint="@color/switch_thumb_color"
+            app:trackTint="@color/switch_track_color"/>
 
 
         <com.google.android.material.switchmaterial.SwitchMaterial
             android:id="@+id/switch_Rec"
             android:layout_width="100dp"
-            android:layout_height="wrap_content"
-            android:text="Send"
-            android:layout_marginTop="30dp"
+            android:layout_height="40dp"
+            android:text="@string/switch_rec"
+            android:textColor="@color/switch_text_color"
+            android:layout_marginTop="41dp"
             android:layout_marginStart="1dp"
-            app:useMaterialThemeColors="false" />
+            app:useMaterialThemeColors="false"
+            app:thumbTint="@color/switch_thumb_color"
+            app:trackTint="@color/switch_track_color"/>
+
+            <TextView
+            android:id="@+id/uiState"
+            android:layout_width="match_parent"
+            android:layout_height="23dp"
+            android:layout_marginTop="91dp"
+            android:text="@string/state_disconnected"
+                android:gravity="center"
+                android:textColor="@color/switch_text_color"
+            android:textSize="12sp"
+                android:textStyle="bold"
+                android:background="@drawable/textview_border"/>
+
 
         <!--
                 <Button
@@ -69,13 +88,13 @@
                     android:text="Pause"
                     android:layout_marginTop="40dp"
                     android:layout_marginStart="65dp"/>
-                -->
+
 
         <ScrollView
             android:id="@+id/scrollViewLog"
             android:layout_width="match_parent"
             android:layout_height="60dp"
-            android:layout_marginTop="60dp">
+            android:layout_marginTop="100dp">
 
             <TextView
                 android:id="@+id/textViewLog"
@@ -84,6 +103,7 @@
                 android:text="logs" />
 
         </ScrollView>
+        -->
 
     </FrameLayout>
 </androidx.wear.widget.BoxInsetLayout>

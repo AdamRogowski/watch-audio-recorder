@@ -15,6 +15,7 @@ import java.util.*
 
 object LogManager{
 
+    /*
     private var activityRef: WeakReference<AppCompatActivity>? = null
     private val textViewLog: TextView?
         get() = activityRef?.get()?.findViewById(R.id.textViewLog)
@@ -25,9 +26,12 @@ object LogManager{
         activityRef = WeakReference(activity)
     }
 
+     */
+
     @SuppressLint("SetTextI18n")
     fun appendLog(message: String) {
         Log.d("appendLog", message)
+        /*
         activityRef?.get()?.runOnUiThread {
             textViewLog?.text = textViewLog?.text.toString() + "\n$message"
 
@@ -36,13 +40,18 @@ object LogManager{
                 scrollViewLog?.fullScroll(View.FOCUS_DOWN)
             }, 20)
         }
+
+         */
     }
 
+    /*
     @SuppressLint("SetTextI18n")
     fun clearLog() {
         textViewLog?.text = "Logs:"
         appendLog("log cleared")
     }
+
+     */
 
     fun getCurrentTime(): String{
         return SimpleDateFormat("HH:mm:ss", Locale.getDefault()).format(Date())
