@@ -5,8 +5,9 @@
     <color name="Silver">#C0C0C0</color>
     <color name="DimGray">#696969</color>
     <color name="DarkRed">#8B0000</color>
-    <color name="switch_thumb_color">#202020</color>
-    <color name="switch_track_color">#6e6e6e</color>
-    <color name="switch_text_color">#202020</color>
-    <color name="textview_border_color">#202020</color>
+    <color name="switch_thumb_color">#DADCE0</color>
+    <color name="switch_track_color">#202124</color>
+    <color name="switch_text_color">#DADCE0</color>
+    <color name="textview_border_color">#DADCE0</color>
+    <color name="layout_background_color">#000000</color>
 </resources>

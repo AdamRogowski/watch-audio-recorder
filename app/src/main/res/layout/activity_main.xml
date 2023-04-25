@@ -5,6 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:padding="@dimen/box_inset_layout_padding"
+    android:background="@color/layout_background_color"
     tools:context=".MainActivity"
     tools:deviceIds="wear">
 
@@ -14,25 +15,31 @@
         android:padding="@dimen/inner_frame_layout_padding"
         app:layout_boxedEdges="all">
 
+
         <com.google.android.material.switchmaterial.SwitchMaterial
             android:id="@+id/switch_Gatt"
-            android:layout_width="100dp"
+            android:layout_width="95dp"
             android:layout_height="40dp"
+            android:layout_marginStart="1dp"
+            android:layout_marginTop="1dp"
+            android:gravity="center"
             android:text="@string/switch_gatt"
             android:textColor="@color/switch_text_color"
-            android:layout_marginTop="1dp"
-            android:layout_marginStart="1dp"
-            app:useMaterialThemeColors="false"
+            android:textSize="12sp"
+            android:textStyle="bold"
             app:thumbTint="@color/switch_thumb_color"
-            app:trackTint="@color/switch_track_color"/>
-
+            app:trackTint="@color/switch_track_color"
+            app:useMaterialThemeColors="false" />
 
         <com.google.android.material.switchmaterial.SwitchMaterial
             android:id="@+id/switch_Rec"
-            android:layout_width="100dp"
+            android:layout_width="95dp"
             android:layout_height="40dp"
             android:text="@string/switch_rec"
+            android:gravity="center"
             android:textColor="@color/switch_text_color"
+            android:textSize="12sp"
+            android:textStyle="bold"
             android:layout_marginTop="41dp"
             android:layout_marginStart="1dp"
             app:useMaterialThemeColors="false"

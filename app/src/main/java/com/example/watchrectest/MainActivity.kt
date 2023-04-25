@@ -101,7 +101,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun startMic(){
-        vibrateThrice()
+        vibrateLong()
         micManager.startRecording()
         fakeSleepModeOn()
         //acquireWakeLock()
@@ -122,7 +122,7 @@ class MainActivity : AppCompatActivity() {
         v.vibrate(VibrationEffect.createOneShot(50, VibrationEffect.DEFAULT_AMPLITUDE))
     }
 
-    private fun vibrateThrice(){
+    private fun vibrateLong(){
         v.vibrate(VibrationEffect.createOneShot(300, VibrationEffect.DEFAULT_AMPLITUDE))
     }
 
