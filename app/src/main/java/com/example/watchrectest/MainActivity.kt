@@ -9,6 +9,7 @@ import android.view.View
 import android.view.WindowManager
 import android.widget.CompoundButton
 import androidx.annotation.RequiresApi
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import com.example.watchrectest.databinding.ActivityMainBinding
 import com.google.android.material.switchmaterial.SwitchMaterial
@@ -155,45 +156,57 @@ class MainActivity : AppCompatActivity() {
 
         //window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
 
-
-
-        binding = ActivityMainBinding.inflate(layoutInflater)
-        setContentView(R.layout.activity_main)
-        switchGatt = findViewById(R.id.switch_Gatt)
-        switchRec = findViewById(R.id.switch_Rec)
-
-        switchGatt.setOnCheckedChangeListener(switchGattChangeListener)
-        switchRec.setOnCheckedChangeListener(switchRecChangeListener)
-
-
-        v = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            val vibratorManager =
-                getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as VibratorManager
-            vibratorManager.defaultVibrator
+        val bluetoothAdapter = BluetoothAdapter.getDefaultAdapter()
+        if (bluetoothAdapter == null || !bluetoothAdapter.isEnabled) {
+            // Bluetooth is not enabled, show a dialog window
+            AlertDialog.Builder(this)
+                .setMessage("\n\nTo use this app, please enable Bluetooth on your device.")
+                .setPositiveButton("Close app") { _, _ ->
+                    // Close the app when the button is clicked
+                    finish()
+                }
+                .setCancelable(false)
+                .show()
         } else {
-            @Suppress("DEPRECATION")
-            getSystemService(VIBRATOR_SERVICE) as Vibrator
+            // Bluetooth is enabled
+            binding = ActivityMainBinding.inflate(layoutInflater)
+            setContentView(R.layout.activity_main)
+            switchGatt = findViewById(R.id.switch_Gatt)
+            switchRec = findViewById(R.id.switch_Rec)
+
+            switchGatt.setOnCheckedChangeListener(switchGattChangeListener)
+            switchRec.setOnCheckedChangeListener(switchRecChangeListener)
+
+
+            v = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                val vibratorManager =
+                    getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as VibratorManager
+                vibratorManager.defaultVibrator
+            } else {
+                @Suppress("DEPRECATION")
+                getSystemService(VIBRATOR_SERVICE) as Vibrator
+            }
+
+            // Initialize a list of required permissions to request runtime
+            val list = listOf(
+                Manifest.permission.RECORD_AUDIO,
+                Manifest.permission.BLUETOOTH,
+                Manifest.permission.BLUETOOTH_ADMIN,
+                Manifest.permission.BLUETOOTH_CONNECT,
+                Manifest.permission.BLUETOOTH_ADVERTISE
+            )
+
+            // Initialize a new instance of ManagePermissions class
+            permissionsManager = PermissionsManager(this, list, REQUEST_PERMISSIONS_CODE)
+            permissionsManager.checkPermissions()
+
+            //LogManager.setActivity(this)
+            UIStateManager.setActivity(this)
+
+            _BLEManager = BLEManager(this)
+
+            micManager = MicManager(_BLEManager)
         }
-
-        // Initialize a list of required permissions to request runtime
-        val list = listOf(
-            Manifest.permission.RECORD_AUDIO,
-            Manifest.permission.BLUETOOTH,
-            Manifest.permission.BLUETOOTH_ADMIN,
-            Manifest.permission.BLUETOOTH_CONNECT,
-            Manifest.permission.BLUETOOTH_ADVERTISE
-        )
-
-        // Initialize a new instance of ManagePermissions class
-        permissionsManager = PermissionsManager(this, list, REQUEST_PERMISSIONS_CODE)
-        permissionsManager.checkPermissions()
-
-        //LogManager.setActivity(this)
-        UIStateManager.setActivity(this)
-
-        _BLEManager = BLEManager(this)
-
-        micManager = MicManager(_BLEManager)
     }
 
     override fun onStop() {
