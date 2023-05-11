@@ -88,6 +88,28 @@ class MainActivity : Activity() {
         }
     }
 
+    private fun fakeSleepModeOn(){
+        // Change screen brightness to minimum
+        val brightness = 0
+        val layoutParam = window.attributes
+        layoutParam.screenBrightness = brightness.toFloat()
+        window.attributes = layoutParam
+
+        // Keep the screen on
+        window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+    }
+
+    private fun fakeSleepModeOff(){
+        // Change screen brightness back to normal
+        val brightness = -1 // -1 means use the system default brightness
+        val layoutParam = window.attributes
+        layoutParam.screenBrightness = brightness.toFloat()
+        window.attributes = layoutParam
+
+        // Allow the screen to turn off automatically
+        window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+    }
+
     private fun vibrate(){
         v.vibrate(VibrationEffect.createOneShot(50, VibrationEffect.DEFAULT_AMPLITUDE))
     }
@@ -108,21 +130,24 @@ class MainActivity : Activity() {
 
     fun onTapStartRec(view: View){
         vibrate()
+        fakeSleepModeOn()
         micManager.startRecording()
     }
 
     fun onTapStopSend(view: View){
         vibrate()
-        micManager.stopSending()
+        micManager.stopRecording()
+        fakeSleepModeOff()
     }
 
     @RequiresApi(Build.VERSION_CODES.S)
     override fun onKeyDown(keyCode: Int, event: KeyEvent): Boolean {
         return run {
             // process bottomKeyPress
-            logManager.appendLog("udalo sie")
+            logManager.appendLog("finished sending")
             vibrateLong()
             micManager.stopRecording()
+            fakeSleepModeOff()
             true
         }
     }
@@ -189,7 +214,7 @@ class MainActivity : Activity() {
                 }
                 //}
                 //queue.add(combArr)
-                logManager.appendLog(logManager.getCurrentTime() + " Added to queue")
+                //logManager.appendLog(logManager.getCurrentTime() + " Added to queue")
             }
         }
 
@@ -201,7 +226,7 @@ class MainActivity : Activity() {
                     val arr = queue.take()
 
                     streamSender.write(arr)
-                    logManager.appendLog(logManager.getCurrentTime() + " sent: " + arr.size.toString() + "B")
+                    //logManager.appendLog(logManager.getCurrentTime() + " sent: " + arr.size.toString() + "B")
 
                 } catch (e: Exception) {
                     logManager.appendLog("Error when sending from queue, e: " + e.message)
