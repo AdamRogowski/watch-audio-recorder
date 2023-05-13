@@ -14,6 +14,7 @@ import androidx.annotation.RequiresApi
 import com.example.watchrectest.databinding.ActivityMainBinding
 import java.util.*
 import android.media.*
+import android.view.WindowManager
 import io.socket.client.Socket
 import java.nio.ByteBuffer
 import java.util.concurrent.ArrayBlockingQueue
@@ -69,6 +70,33 @@ class MainActivity : Activity() {
         micManager = MicManager()
     }
 
+    override fun onDestroy() {
+        super.onDestroy()
+        SocketHandler.closeConnection()
+    }
+
+    private fun fakeSleepModeOn(){
+        // Change screen brightness to minimum
+        val brightness = 0
+        val layoutParam = window.attributes
+        layoutParam.screenBrightness = brightness.toFloat()
+        window.attributes = layoutParam
+
+        // Keep the screen on
+        window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+    }
+
+    private fun fakeSleepModeOff(){
+        // Change screen brightness back to normal
+        val brightness = -1 // -1 means use the system default brightness
+        val layoutParam = window.attributes
+        layoutParam.screenBrightness = brightness.toFloat()
+        window.attributes = layoutParam
+
+        // Allow the screen to turn off automatically
+        window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+    }
+
     private fun vibrate(){
         v.vibrate(VibrationEffect.createOneShot(50, VibrationEffect.DEFAULT_AMPLITUDE))
     }
@@ -97,11 +125,13 @@ class MainActivity : Activity() {
     fun onTapStartRec(view: View){
         vibrate()
         micManager.startRecording()
+        fakeSleepModeOn()
     }
 
     fun onTapStopSend(view: View){
         vibrate()
-        micManager.stopSending()
+        micManager.stopRecording()
+        fakeSleepModeOff()
     }
 
     @RequiresApi(Build.VERSION_CODES.S)
@@ -111,6 +141,7 @@ class MainActivity : Activity() {
             logManager.appendLog("onKeyDown")
             vibrateLong()
             micManager.stopRecording()
+            fakeSleepModeOff()
             true
         }
     }
@@ -161,7 +192,7 @@ class MainActivity : Activity() {
                 } catch (e: Exception) {
                     logManager.appendLog("Error when recording into queue, e: " + e.message)
                 }
-                logManager.appendLog(logManager.getCurrentTime() + " Added to queue")
+                //logManager.appendLog(logManager.getCurrentTime() + " Added to queue")
             }
         }
 
@@ -174,7 +205,7 @@ class MainActivity : Activity() {
 
                     mSocket.emit("audioData", arr)
 
-                    logManager.appendLog(logManager.getCurrentTime() + " sent: " + arr.size.toString() + "B")
+                    //logManager.appendLog(logManager.getCurrentTime() + " sent: " + arr.size.toString() + "B")
 
                 } catch (e: Exception) {
                     logManager.appendLog("Error when sending from queue, e: " + e.message)
@@ -185,6 +216,7 @@ class MainActivity : Activity() {
         fun stopRecording() {
             if (recorder != null) {
                 recordingInProgress.set(false)
+                sendingInProgress.set(false)
                 recorder!!.stop()
                 recorder!!.release()
                 recorder = null
