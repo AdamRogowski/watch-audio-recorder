@@ -19,7 +19,7 @@ private const val REQUEST_PERMISSIONS_CODE = 200
 
 class MainActivity : AppCompatActivity() {
 
-    private lateinit var v: Vibrator
+    //private lateinit var v: Vibrator
 
     private lateinit var binding: ActivityMainBinding
 
@@ -60,6 +60,7 @@ class MainActivity : AppCompatActivity() {
     private val switchRecChangeListener = CompoundButton.OnCheckedChangeListener { _, isChecked ->
         if (isChecked) {
             if(switchGatt.isChecked && _BLEManager.anyoneSubscribes()){
+
                 UIStateManager.setUIState(UIState.SENDING)
                 startMic()
             }
@@ -102,14 +103,12 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun startMic(){
-        vibrateLong()
         micManager.startRecording()
         fakeSleepModeOn()
         //acquireWakeLock()
     }
 
     private fun stopMic(){
-        vibrate()
         micManager.stopAction()
         fakeSleepModeOff()
         //releaseWakeLock()
@@ -117,14 +116,6 @@ class MainActivity : AppCompatActivity() {
 
     fun onTapTest(view: View){
         _BLEManager.notifyTest()
-    }
-
-    private fun vibrate(){
-        v.vibrate(VibrationEffect.createOneShot(50, VibrationEffect.DEFAULT_AMPLITUDE))
-    }
-
-    private fun vibrateLong(){
-        v.vibrate(VibrationEffect.createOneShot(300, VibrationEffect.DEFAULT_AMPLITUDE))
     }
 
     private fun fakeSleepModeOn(){
@@ -177,7 +168,7 @@ class MainActivity : AppCompatActivity() {
             switchGatt.setOnCheckedChangeListener(switchGattChangeListener)
             switchRec.setOnCheckedChangeListener(switchRecChangeListener)
 
-
+            /*
             v = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
                 val vibratorManager =
                     getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as VibratorManager
@@ -186,6 +177,7 @@ class MainActivity : AppCompatActivity() {
                 @Suppress("DEPRECATION")
                 getSystemService(VIBRATOR_SERVICE) as Vibrator
             }
+             */
 
             // Initialize a list of required permissions to request runtime
             val list = listOf(
